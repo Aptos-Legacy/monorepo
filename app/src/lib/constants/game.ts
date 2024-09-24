@@ -1,0 +1,3 @@
+export const PLAYER_COLLISION_GROUP = 15;
+export const GROUND_COLLISION_GROUP = 0;
+export const MONSTER_COLLISION_GROUP = 1;

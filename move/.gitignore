@@ -1,0 +1,4 @@
+/build
+.aptos
+/gas-profiling
+/node_modules

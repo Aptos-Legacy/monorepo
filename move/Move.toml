@@ -1,0 +1,25 @@
+[package]
+name = "rpg"
+version = "0.0.1"
+authors = []
+upgrade_policy = "compatible"
+
+[addresses]
+my_addr = "_"
+
+[dev-addresses]
+my_addr = "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171"
+
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dependencies.AptosTokenObjects]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-token-objects"
+
+
+[dev-dependencies]
