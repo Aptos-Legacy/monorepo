@@ -564,7 +564,7 @@ module my_addr::Equipment {
 
         // assert!(armor_balance(user1_addr, frog_armor_token) == 1, 0);
 
-        let borrowed = borrow_global<ArmorStats>(object_address(&frog_armor_token));
+        let borrowed = borrow_global<ArmorStats>(object::object_address(&frog_armor_token));
         assert!(borrowed.defense == 10, 0);
     }
 

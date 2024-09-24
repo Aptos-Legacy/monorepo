@@ -76,9 +76,8 @@ module my_addr::Store {
     }
 
     // ================================= ENTRIES ================================== //
-    public entry fun buy_offer() {}
+    public entry fun buy_offer(id: u64) {}
 
-    // ================================= UTILS ================================== //
     fun add_offer(offer: Offer) acquires Offers {
         let offers_address = create_object_address(&@my_addr, OFFERS_SEED);
         let offers = borrow_global_mut<Offers>(offers_address);
@@ -107,9 +106,19 @@ module my_addr::Store {
         add_offer(offer);
     }
 
+    // ================================= UTILS ================================== //
+    const OCTAS_PER_APT: u64 = 100_000_000;
+
+    public fun octas_to_apt(amount: u64): u64 {
+        amount / OCTAS_PER_APT
+    }
+
+    public fun apt_to_octas(amount: u64): u64 {
+        amount * OCTAS_PER_APT
+    }
+
 
     // ================================= VIEWS ================================== //
-
 
     #[view]
     public fun get_all_offers_v1(): vector<GetOfferReturnV1> acquires Offers {

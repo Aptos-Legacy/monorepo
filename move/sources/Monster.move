@@ -7,14 +7,11 @@ module my_addr::Monster {
     use aptos_framework::object::{Object, object_address};
     use my_addr::RewardTable::{RewardTable, RewardTableV1};
     use std::option;
-    #[test_only]
-    use std::signer;
-    #[test_only]
-    use my_addr::RewardTable::create_reward_table_v1;
+
 
     // ================================= STRUCTS ================================== //
     // TODO: we'd want the monster to have actual stats, potentially a description
-       struct Monster has key {
+    struct Monster has key {
         name: String,
         loot_table: Object<RewardTableV1>
     }
@@ -115,6 +112,14 @@ module my_addr::Monster {
     use my_addr::Equipment;
     #[test_only]
     use my_addr::Equipment::Token;
+    #[test_only]
+    use std::signer;
+    #[test_only]
+    use my_addr::RewardTable::create_reward_table_v1;
+
+
+    #[test_only]
+    const TEST_MONSTER_NAME: vector<u8> = b"Big Frog";
 
     #[test(deployer= @my_addr)]
     fun create_monster_with_loot_table(deployer: &signer) acquires Monster {
@@ -139,9 +144,6 @@ module my_addr::Monster {
 
         assert!(monster.name == monster_name, 1);
     }
-
-    #[test_only]
-    const TEST_MONSTER_NAME: vector<u8> = b"Big Frog";
 
 
     #[test_only]
