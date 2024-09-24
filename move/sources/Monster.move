@@ -5,42 +5,29 @@ module my_addr::Monster {
     use aptos_framework::object;
     use aptos_framework::event;
     use aptos_framework::object::{Object, object_address};
-    use my_addr::RewardTable::{RewardTable, RewardTableV1};
-    use std::option;
+    use my_addr::RewardTable::{RewardTable};
 
 
     // ================================= STRUCTS ================================== //
     // TODO: we'd want the monster to have actual stats, potentially a description
     struct Monster has key {
         name: String,
-        loot_table: Object<RewardTableV1>
+        loot_table: Object<RewardTable>
     }
 
     // ================================= EVENTS ================================== //
 
+
     #[event]
     struct NewMonsterCreatedEvent has store, drop {
         name: String,
-        loot_table: option::Option<Object<RewardTable>>
-    }
-
-    #[event]
-    struct NewMonsterCreatedEventV1 has store, drop {
-        name: String,
-        loot_table: Object<RewardTableV1>
+        loot_table: Object<RewardTable>
     }
 
     #[event]
     struct LootTableUpdateEvent has store, drop {
         name: String,
-        loot_table: option::Option<Object<RewardTable>>
-    }
-
-
-    #[event]
-    struct LootTableUpdateEventV1 has store, drop {
-        name: String,
-        loot_table: Object<RewardTableV1>
+        loot_table: Object<RewardTable>
     }
 
     // ================================= CONSTANTS ================================== //
@@ -52,7 +39,7 @@ module my_addr::Monster {
 
 
     // ================================= ENTRY ================================== //
-    public entry fun create_monster_v1(user: &signer, name: String, loot_table: Object<RewardTableV1>) {
+    public entry fun create_monster(user: &signer, name: String, loot_table: Object<RewardTable>) {
         let constructor_ref = object::create_named_object(user, make_monster_name_seed(name));
         let signer_ref = object::generate_signer(&constructor_ref);
 
@@ -61,14 +48,14 @@ module my_addr::Monster {
             loot_table,
         };
 
-        event::emit(NewMonsterCreatedEventV1 { name, loot_table });
+        event::emit(NewMonsterCreatedEvent { name, loot_table });
         move_to(&signer_ref, monster);
     }
 
     public entry fun set_loot_table(
         user: &signer,
         name: String,
-        loot_table: Object<RewardTableV1>
+        loot_table: Object<RewardTable>
     ) acquires Monster {
         let seed = make_monster_name_seed(name);
         let address = object::create_object_address(&@my_addr, seed);
@@ -76,7 +63,7 @@ module my_addr::Monster {
         let monster = borrow_global_mut<Monster>(address);
         monster.loot_table = loot_table;
 
-        event::emit(LootTableUpdateEventV1 {
+        event::emit(LootTableUpdateEvent {
             name, loot_table
         });
     }
@@ -89,18 +76,19 @@ module my_addr::Monster {
         bcs::to_bytes(&string_utils::format2(&b"{}::{}", MONSTER_SEED, name))
     }
 
+
+    // ================================= VIEWS ================================== //
+    #[view]
+    public fun get_loot_table(monster: Object<Monster>): Object<RewardTable> acquires Monster {
+        let monster = borrow_global<Monster>(object_address(&monster));
+        monster.loot_table
+    }
+
     #[view]
     public fun get_monster(name: String): Object<Monster> {
         let seed = make_monster_name_seed(name);
         let address = object::create_object_address(&@my_addr, seed);
         object::address_to_object<Monster>(address)
-    }
-
-    // ================================= VIEWS ================================== //
-    #[view]
-    public fun get_loot_table(monster: Object<Monster>): Object<RewardTableV1> acquires Monster {
-        let monster = borrow_global<Monster>(object_address(&monster));
-        monster.loot_table
     }
 
     // ================================= TESTS ================================== //
@@ -115,7 +103,7 @@ module my_addr::Monster {
     #[test_only]
     use std::signer;
     #[test_only]
-    use my_addr::RewardTable::create_reward_table_v1;
+    use my_addr::RewardTable::create_reward_table;
 
 
     #[test_only]
@@ -131,10 +119,10 @@ module my_addr::Monster {
         let item_names = vector<String>[string::utf8((b"Divine Hammer"))];
         let tokens = vector<Object<Token>>[armor_token];
         let chances = vector<u8>[50];
-        let loot_table = create_reward_table_v1(deployer, item_names, tokens, chances);
+        let loot_table = create_reward_table(deployer, item_names, tokens, chances);
 
         let monster_name = string::utf8(b"Big Frog");
-        create_monster_v1(deployer, monster_name, loot_table);
+        create_monster(deployer, monster_name, loot_table);
 
         let created_monster_address = object::create_object_address(
             &deployer_address,
@@ -154,10 +142,10 @@ module my_addr::Monster {
         let item_names = vector<String>[string::utf8((b"Divine Hammer"))];
         let tokens = vector<Object<Token>>[armor_token];
         let chances = vector<u8>[50];
-        let loot_table = create_reward_table_v1(deployer, item_names, tokens, chances);
+        let loot_table = create_reward_table(deployer, item_names, tokens, chances);
 
         let monster_name = string::utf8(TEST_MONSTER_NAME);
-        create_monster_v1(deployer, monster_name, loot_table);
+        create_monster(deployer, monster_name, loot_table);
     }
 
     #[test_only]
@@ -167,10 +155,10 @@ module my_addr::Monster {
         let item_names = vector<String>[string::utf8((b"Divine Hammer"))];
         let tokens = vector<Object<Token>>[armor_token];
         let chances = vector<u8>[100];
-        let loot_table = create_reward_table_v1(deployer, item_names, tokens, chances);
+        let loot_table = create_reward_table(deployer, item_names, tokens, chances);
 
         let monster_name = string::utf8(TEST_MONSTER_NAME);
-        create_monster_v1(deployer, monster_name, loot_table);
+        create_monster(deployer, monster_name, loot_table);
     }
 
     #[test_only]

@@ -1,8 +1,9 @@
 module my_addr::Store {
     use std::signer;
     use aptos_framework::object::{ExtendRef, Self, create_object_address, Object};
-    use my_addr::Equipment::{Token, Config};
-    use std::string::{String, Self};
+    use my_addr::Equipment::Token;
+    use std::string;
+    use std::string::String;
     use std::vector;
     use aptos_std::smart_table;
     use aptos_std::smart_table::SmartTable;
@@ -12,8 +13,6 @@ module my_addr::Store {
     use aptos_framework::coin;
     use my_addr::Equipment;
 
-    #[test_only]
-    use my_addr::Equipment;
 
     /// Stores track offers, and serves as an entrypoint to buy items
     struct Offers has key {
@@ -34,7 +33,7 @@ module my_addr::Store {
     }
 
 
-    struct GetOfferReturnV1 {
+    struct GetOfferReturn {
         name: String,
         price: u64,
         id: u64,
@@ -160,10 +159,10 @@ module my_addr::Store {
     // ================================= VIEWS ================================== //
 
     #[view]
-    public fun get_all_offers_v1(): vector<GetOfferReturnV1> acquires Offers {
+    public fun get_all_offers_v1(): vector<GetOfferReturn> acquires Offers {
         let offers_address = create_object_address(&@my_addr, OFFERS_SEED);
         let offers_container = borrow_global<Offers>(offers_address);
-        let acc = vector<GetOfferReturnV1>[];
+        let acc = vector<GetOfferReturn>[];
 
         for (i in 0..offers_container.counter) {
             if (smart_table::contains(&offers_container.offers, i)) {
@@ -172,7 +171,7 @@ module my_addr::Store {
                 let icon_uri = fungible_asset::icon_uri(offer.token);
 
                 vector::push_back(&mut acc,
-                    GetOfferReturnV1 {
+                    GetOfferReturn {
                         name: offer.name,
                         price: offer.price,
                         id: i,
@@ -214,9 +213,17 @@ module my_addr::Store {
     }
 
 
+    #[test_only]
+    const E_OFFER_DOES_NOT_EXIST: u64 = 2;
+
     #[test(deployer= @my_addr)]
-    public fun test_create_and_store_offer(deployer: &signer) {
+    public fun test_create_and_store_offer(deployer: &signer) acquires Offers {
         init_module_for_test(deployer);
         let offer = create_test_offer(deployer);
+        add_offer(offer);
+
+        let offers_address = create_object_address(&@my_addr, OFFERS_SEED);
+        let offers = borrow_global<Offers>(offers_address);
+        assert!(smart_table::contains(&offers.offers, 0), E_OFFER_DOES_NOT_EXIST);
     }
 }

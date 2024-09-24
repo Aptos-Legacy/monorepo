@@ -31,7 +31,7 @@ script {
         let obj = address_to_object<Equipment::Token>(ref);
 
         // Create and seed Reward Tables
-        let reward_table = RewardTable::create_reward_table_v1(
+        let reward_table = RewardTable::create_reward_table(
             src,
             vector[equipment_name],
             vector[obj],
@@ -40,7 +40,7 @@ script {
 
         // Create and seed monsters
         let monster_name = string::utf8(b"Terrible Frog");
-        Monster::create_monster_v1(src, monster_name, reward_table);
+        Monster::create_monster(src, monster_name, reward_table);
 
         let monster_object = Monster::get_monster(monster_name);
 

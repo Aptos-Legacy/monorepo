@@ -164,7 +164,7 @@ module my_addr::GameManager {
         let mission_reward_tables = Mission::get_all_mission_rewards_for(mission_id);
 
         vector::for_each(mission_reward_tables, |reward_table| {
-            let rolled_rewards = RewardTable::roll_for_drops_v1(reward_table); //vector<Object<Token>>
+            let rolled_rewards = RewardTable::roll_for_drops(reward_table); //vector<Object<Token>>
             vector::for_each(rolled_rewards, |reward| {
                 Equipment::mint_from_token(reward, player, 1);
             })

@@ -10,22 +10,13 @@ module my_addr::RewardTable {
     use aptos_framework::object::Object;
     use my_addr::Equipment::{Self, Token};
 
+
     struct RewardTable has key {
         items: vector<Item>,
         // TODO: implement gold
     }
 
-    struct RewardTableV1 has key {
-        items: vector<ItemV1>,
-    }
-
-    struct Item has store {
-        name: String,
-        chance: u8,
-    }
-
-
-    struct ItemV1 has store, copy {
+    struct Item has store, copy {
         name: String,
         chance: u8,
         token: Object<Equipment::Token>,
@@ -34,13 +25,6 @@ module my_addr::RewardTable {
 
     #[event]
     struct TableCreationEvent has drop, store {
-        monster: String,
-        table_address: address,
-        items: vector<String>,
-    }
-
-    #[event]
-    struct TableCreationEventv1 has drop, store {
         table_address: address,
         items: vector<String>,
     }
@@ -53,15 +37,15 @@ module my_addr::RewardTable {
 
     const E_CHANCES_REWARDS_LENGTH_NOT_MATCHIN: u64 = 1;
 
-    public fun create_reward_table_v1(
+    public fun create_reward_table(
         user: &signer,
         names: vector<String>,
         tokens: vector<Object<Token>>,
         chances: vector<u8>
-    ): Object<RewardTableV1> {
+    ): Object<RewardTable> {
         assert!(vector::length(&tokens) == vector::length(&chances), E_CHANCES_REWARDS_LENGTH_NOT_MATCHIN);
 
-        let zipped: vector<ItemV1> = vector::empty();
+        let zipped: vector<Item> = vector::empty();
 
         for (i in 0.. vector::length(&tokens)) {
             /*
@@ -74,7 +58,7 @@ module my_addr::RewardTable {
             let chance = *vector::borrow(&chances, i);
             let token = *vector::borrow(&tokens, i);
 
-            vector::push_back(&mut zipped, ItemV1 {
+            vector::push_back(&mut zipped, Item {
                 name,
                 chance,
                 token
@@ -82,7 +66,7 @@ module my_addr::RewardTable {
         };
 
 
-        let table = RewardTableV1 { items: zipped };
+        let table = RewardTable { items: zipped };
 
         // NOTE: we're creating a simple object here. Do we want to give in a seed? I don't think so
         let constructor_ref = object::create_object(signer::address_of(user));
@@ -91,14 +75,14 @@ module my_addr::RewardTable {
 
         let table_address = object::address_from_constructor_ref(&constructor_ref);
 
-        let table_creation_event = TableCreationEventv1 {
+        let table_creation_event = TableCreationEvent {
             table_address,
             items: names
         };
         event::emit(table_creation_event);
 
 
-        object::object_from_constructor_ref<RewardTableV1>(&constructor_ref)
+        object::object_from_constructor_ref<RewardTable>(&constructor_ref)
     }
 
 
@@ -111,21 +95,17 @@ module my_addr::RewardTable {
     inline fun use_item(_value: &Item) {}
 
 
-    // NOTE: required workaround as for_each_ref to actually get types working
-    inline fun use_item_v1(_value: &ItemV1) {}
-
-
-    public(friend) fun roll_for_drops_v1(
-        reward_obj: Object<RewardTableV1>
-    ): vector<Object<Equipment::Token>> acquires RewardTableV1 {
+    public(friend) fun roll_for_drops(
+        reward_obj: Object<RewardTable>
+    ): vector<Object<Equipment::Token>> acquires RewardTable {
         let addr = object::object_address(&reward_obj);
-        let droppable_items = &borrow_global<RewardTableV1>(addr).items;
+        let droppable_items = &borrow_global<RewardTable>(addr).items;
 
         let dropped_names = vector::empty<String>();
         let dropped_tokens = vector::empty<Object<Equipment::Token>>();
 
-        vector::for_each_ref<ItemV1>(droppable_items, |item| {
-            use_item_v1(item);
+        vector::for_each_ref<Item>(droppable_items, |item| {
+            use_item(item);
 
             let has_dropped = decide_drops_internal(item.chance);
             if (has_dropped) {
@@ -142,44 +122,6 @@ module my_addr::RewardTable {
         dropped_tokens
     }
 
-
-    #[randomness]
-    public(friend) entry fun roll_for_drops(reward_obj: Object<RewardTable>) acquires RewardTable {
-        let addr = object::object_address(&reward_obj);
-        let droppable_items = &borrow_global<RewardTable>(addr).items;
-        let actual_drops = vector::empty<String>();
-
-        vector::for_each_ref(droppable_items, |item| {
-            use_item(item);
-
-            let has_dropped = decide_drops_internal(item.chance);
-            if (has_dropped) {
-                vector::push_back(&mut actual_drops, item.name);
-            };
-        });
-
-        let drop_event = DroppedItemsEvent { names: actual_drops };
-        event::emit(drop_event);
-    }
-
-    // Instead of using the object address, maybe we could use the object's name? That or maybe we'd want all this data to be stored elsewhere, maybe in a drop manager that can be called after a fight is won
-    #[randomness]
-    entry fun try_and_drop(addr: address) acquires RewardTable {
-        let droppable_items = &borrow_global<RewardTable>(addr).items;
-        let actual_drops = vector::empty<String>();
-
-        vector::for_each_ref(droppable_items, |item| {
-            use_item(item);
-
-            let has_dropped = decide_drops_internal(item.chance);
-            if (has_dropped) {
-                vector::push_back(&mut actual_drops, item.name);
-            };
-        });
-
-        let drop_event = DroppedItemsEvent { names: actual_drops };
-        event::emit(drop_event);
-    }
 
     fun decide_drops_internal(chance: u8): bool {
         if (chance == 100) {

@@ -4,7 +4,7 @@ module my_addr::Account {
     use aptos_framework::object::{ObjectCore, Object};
     use aptos_framework::event;
     use std::signer;
-    use my_addr::Character::{CharacterCreationTrackerV1, create_tracker};
+    use my_addr::Character::{CharacterCreationTracker, create_tracker};
     use std::string::String;
 
     const ACCOUNTS_SEED: vector<u8> = b"ACCOUNTS";
@@ -13,7 +13,7 @@ module my_addr::Account {
     struct PlayerAccount has key, copy {
         name: String,
         progress: u8,
-        characters: Object<CharacterCreationTrackerV1>
+        characters: Object<CharacterCreationTracker>
     }
 
     #[event]
@@ -69,7 +69,7 @@ module my_addr::Account {
     }
 
     #[view]
-    public fun get_owned_characters(player: address): Object<CharacterCreationTrackerV1> acquires PlayerAccount {
+    public fun get_owned_characters(player: address): Object<CharacterCreationTracker> acquires PlayerAccount {
         let account_address = get_player_account_address(player);
         let player_account = borrow_global<PlayerAccount>(account_address);
         player_account.characters

@@ -5,6 +5,7 @@ module my_addr::Equipment {
     friend my_addr::end_to_end;
 
     friend my_addr::GameManager;
+    friend my_addr::Store;
 
     use std::option::{Self, Option};
     use std::signer;
@@ -16,13 +17,12 @@ module my_addr::Equipment {
     use aptos_framework::object;
     use aptos_framework::primary_fungible_store;
     use aptos_token_objects::property_map;
-    use aptos_framework::object::{Object, ConstructorRef, object_address};
+    use aptos_framework::object::{Object, ConstructorRef};
 
     use aptos_framework::fungible_asset::Metadata;
     use aptos_token_objects::token::description;
 
     use std::error;
-    use aptos_std::debug;
     use aptos_framework::account::{create_resource_account, SignerCapability, create_signer_with_capability};
 
 
@@ -47,10 +47,6 @@ module my_addr::Equipment {
         fungible_asset_burn_ref: fungible_asset::BurnRef,
     }
 
-    // NOTE: we're only dealing with defense for now. Maybe we'll had more stuff in a future version
-    struct ArmorStats has key {
-        defense: u64,
-    }
 
     struct Stats has key {
         attack: u64,
@@ -111,62 +107,6 @@ module my_addr::Equipment {
     }
 
 
-    public fun create_armor_as_fungible_token(creator: &signer) {
-        let defense = 10;
-        let royalty_config = royalty::create(5, 100, signer::address_of(creator));
-        let description = string::utf8(b"An armor made for a Frog");
-
-        let name = string::utf8(b"Frog Armor");
-        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
-
-        let constructor_ref = token::create_named_token(
-            creator,
-            collection,
-            description,
-            name,
-            option::some(royalty_config),
-            string::utf8(b"https://myarmor.com/Frog_Armor.png"),
-        );
-
-        let object_signer = object::generate_signer(&constructor_ref);
-        let property_mutator_ref = property_map::generate_mutator_ref(&constructor_ref);
-
-        move_to(&object_signer, ArmorStats {
-            defense
-        });
-
-        let properties = property_map::prepare_input(vector[], vector[], vector[]);
-        property_map::init(&constructor_ref, properties);
-
-        // TODO: we'll want something more general to handle more stats
-        property_map::add_typed(
-            &property_mutator_ref,
-            string::utf8(DEFENSE_VALUE_PROPERTY_NAME),
-            defense
-        );
-
-        primary_fungible_store::create_primary_store_enabled_fungible_asset(
-            &constructor_ref,
-            option::none(),
-            name,
-            string::utf8(b"FROG_ARMOR"),
-            0,
-            string::utf8(b"ICON_URI"),
-            string::utf8(b"PROJECT_URI"), );
-
-        let fungible_asset_mint_ref = fungible_asset::generate_mint_ref(&constructor_ref);
-        let fungible_asset_burn_ref = fungible_asset::generate_burn_ref(&constructor_ref);
-
-        // Publishes the FoodToken resource with the refs.
-        let armor_token = ArmorToken {
-            property_mutator_ref,
-            fungible_asset_mint_ref,
-            fungible_asset_burn_ref,
-        };
-
-        move_to(&object_signer, armor_token);
-    }
-
     public fun create_stats(attack: u64, defense: u64, health: u64): Stats {
         Stats {
             attack,
@@ -200,35 +140,6 @@ module my_addr::Equipment {
 
 
         add_stats_to_token(token_constructor_ref, stats);
-    }
-
-    public(friend) fun create_armor_as_fungible_token_v1(creator: &signer) acquires Config {
-        let signerCap = get_signer_cap();
-        let signer = create_signer_with_capability(signerCap);
-
-        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
-        let armor_name = string::utf8(b"Frog Armor");
-        // create_armor_as_fungible_token_v1(deployer);
-        let armor_description = string::utf8(b"description");
-        let armor_uri = string::utf8(b"armor uri");
-        let token_symbol = string::utf8(b"Frog_Armor");
-        let token_icon_uri = string::utf8(b"Frog Armor icon uri");
-        let project_uri = string::utf8(b"Project uri");
-
-        let token_constructor_ref = inner_create_fungible_token(&signer,
-            collection,
-            armor_description,
-            armor_name,
-            armor_uri,
-            token_symbol,
-            token_icon_uri,
-            project_uri
-        );
-
-        let stats = ArmorStats {
-            defense: 10
-        };
-        add_stats_to_armor_token(token_constructor_ref, stats);
     }
 
 
@@ -310,87 +221,6 @@ module my_addr::Equipment {
     }
 
 
-    fun add_stats_to_armor_token(
-        token_constructor_ref: ConstructorRef,
-        stats: ArmorStats
-    ) {
-        let object_signer = object::generate_signer(&token_constructor_ref);
-        let property_mutator_ref = property_map::generate_mutator_ref(&token_constructor_ref);
-
-        let properties = property_map::prepare_input(vector[], vector[], vector[]);
-        property_map::init(&token_constructor_ref, properties);
-
-        property_map::add_typed(
-            &property_mutator_ref,
-            string::utf8(DEFENSE_VALUE_PROPERTY_NAME),
-            stats.defense
-        );
-
-        move_to(&object_signer, stats);
-    }
-
-
-    public fun create_armor_as_fungible_token_v2(
-        creator: &signer,
-        armor_name: String,
-        armor_description: String
-    ) acquires Config {
-        let signerCap = get_signer_cap();
-        let signer = create_signer_with_capability(signerCap);
-
-        let defense = 10;
-        let royalty_config = royalty::create(5, 100, signer::address_of(creator));
-
-        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
-
-        let constructor_ref = token::create_named_token(
-            &signer,
-            collection,
-            armor_description,
-            armor_name,
-            option::some(royalty_config),
-            string::utf8(b"https://myarmor.com/Frog_Armor.png"),
-        );
-
-        let object_signer = object::generate_signer(&constructor_ref);
-        let property_mutator_ref = property_map::generate_mutator_ref(&constructor_ref);
-
-        move_to(&object_signer, ArmorStats {
-            defense
-        });
-
-        let properties = property_map::prepare_input(vector[], vector[], vector[]);
-        property_map::init(&constructor_ref, properties);
-
-        // TODO: we'll want something more general to handle more stats
-        property_map::add_typed(
-            &property_mutator_ref,
-            string::utf8(DEFENSE_VALUE_PROPERTY_NAME),
-            defense
-        );
-
-        primary_fungible_store::create_primary_store_enabled_fungible_asset(
-            &constructor_ref,
-            option::none(),
-            armor_name,
-            string::utf8(b"FROG_ARMOR"),
-            0,
-            string::utf8(b"ICON_URI"),
-            string::utf8(b"PROJECT_URI"), );
-
-        let fungible_asset_mint_ref = fungible_asset::generate_mint_ref(&constructor_ref);
-        let fungible_asset_burn_ref = fungible_asset::generate_burn_ref(&constructor_ref);
-
-        // Publishes the FoodToken resource with the refs.
-        let armor_token = ArmorToken {
-            property_mutator_ref,
-            fungible_asset_mint_ref,
-            fungible_asset_burn_ref,
-        };
-
-        move_to(&object_signer, armor_token);
-    }
-
     // ================================= UTILS ================================== //
     inline fun get_signer_cap(): &SignerCapability acquires Config {
         let config = borrow_global<Config>(@my_addr);
@@ -406,7 +236,7 @@ module my_addr::Equipment {
     }
 
 
-    public fun mint_from_token(
+    public(friend) fun mint_from_token(
         token: Object<Token>,
         receiver: address,
         amount: u64
@@ -442,7 +272,6 @@ module my_addr::Equipment {
         let config = borrow_global<Config>(@my_addr);
         let addr = signer::address_of(&create_signer_with_capability(&config.signer_cap));
         let token_addr = token::create_token_address(&addr, &string::utf8(EQUIPMENT_COLLECTION_NAME), &token_name);
-        debug::print(&token_addr);
         token_addr
     }
 
@@ -483,7 +312,7 @@ module my_addr::Equipment {
 
     // ================================= TEST ================================== //
     #[test(deployer= @my_addr, user1= @0x123)]
-    fun create_and_mint_armor(deployer: &signer, user1: &signer) acquires Token, ArmorStats, Config {
+    fun create_and_mint_armor(deployer: &signer, user1: &signer) acquires Token, Stats, Config {
         // This test assumes that the creator's address is equal to @my_addr.
         assert!(signer::address_of(deployer) == @my_addr, 0);
 
@@ -495,7 +324,7 @@ module my_addr::Equipment {
         // Now we create a new armor type named Frog Armor
         let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
         let armor_name = string::utf8(b"Frog Armor");
-        // create_armor_as_fungible_token_v1(deployer);
+
         let armor_description = string::utf8(b"description");
         let armor_uri = string::utf8(b"armor uri");
         let token_symbol = string::utf8(b"Frog_Armor");
@@ -516,10 +345,13 @@ module my_addr::Equipment {
             project_uri
         );
 
-        let stats = ArmorStats {
-            defense: 10
+        let stats = Stats {
+            defense: 10,
+            health: 0,
+            attack: 0,
         };
-        add_stats_to_armor_token(token_constructor_ref, stats);
+        //add_stats_to_armor_token(token_constructor_ref, stats);
+        add_stats_to_token(token_constructor_ref, stats);
 
         // Then we mint for another user
         let user1_addr = signer::address_of(user1);
@@ -531,7 +363,7 @@ module my_addr::Equipment {
 
         // assert!(armor_balance(user1_addr, frog_armor_token) == 1, 0);
 
-        let borrowed = borrow_global<ArmorStats>(object::object_address(&frog_armor_token));
+        let borrowed = borrow_global<Stats>(object::object_address(&frog_armor_token));
         assert!(borrowed.defense == 10, 0);
     }
 
@@ -539,7 +371,6 @@ module my_addr::Equipment {
     public fun create_test_token(): String acquires Config {
         let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
         let armor_name = string::utf8(b"Frog Armor");
-        // create_armor_as_fungible_token_v1(deployer);
         let armor_description = string::utf8(b"description");
         let armor_uri = string::utf8(b"armor uri");
         let token_symbol = string::utf8(b"Frog_Armor");
@@ -560,11 +391,13 @@ module my_addr::Equipment {
             project_uri
         );
 
-        let stats = ArmorStats {
-            defense: 10
-        };
-        add_stats_to_armor_token(token_constructor_ref, stats);
 
+        let stats = Stats {
+            defense: 10,
+            attack: 0,
+            health: 0
+        };
+        add_stats_to_token(token_constructor_ref, stats);
 
         armor_name
     }

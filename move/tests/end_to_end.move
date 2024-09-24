@@ -7,7 +7,6 @@ module my_addr::end_to_end {
     use std::vector;
     use my_addr::Character;
     use my_addr::Mission;
-    use std::debug;
     use std::string::String;
     use aptos_framework::object::{Self, address_to_object};
     use aptos_framework::randomness;
@@ -34,7 +33,6 @@ module my_addr::end_to_end {
         Mission::init_module_for_test(deployer);
 
 
-
         // ================================= Create account and characters ================================== //
         GameManager::create_account(deployer, string::utf8(account_name));
 
@@ -43,7 +41,7 @@ module my_addr::end_to_end {
 
         // FIXME: Account and characters have nothing in common as Character handles all the character creation and storage logic without at any point referencing the Account resource
         Character::create_new_character(deployer, string::utf8(character_name));
-        let created_characters = Character::get_all_characters_v1(deployer_address);
+        let created_characters = Character::get_all_characters(deployer_address);
         let names = vector::map(created_characters, |char| {
             let (name, _, _) = Character::deconstruct_character(char);
             name
@@ -70,7 +68,6 @@ module my_addr::end_to_end {
         let next_mission = mission + 1;
         GameManager::start_mission(deployer, next_mission);
         let mission = GameManager::get_current_mission(deployer_address);
-        debug::print(&mission);
 
 
         assert!(mission == 2, E_MISSION_NOT_MATCHING);
@@ -99,23 +96,32 @@ module my_addr::end_to_end {
         // ================================= Create Missions and rewards ================================== //
 
         // TODO: name of the armor and it's stats should be fed in! But we know it's Frog Armor
-        Equipment::create_armor_as_fungible_token_v1(deployer);
-
         let armor_name = b"Frog Armor";
-        let address = Equipment::get_token_address(string::utf8(armor_name));
+        let armor_name_str = string::utf8(armor_name);
+        let stats = Equipment::create_stats(0, 10, 0);
+        Equipment::create_equipment_as_fungible_token(armor_name_str,
+            string::utf8(b"description"),
+            string::utf8(b"uri"),
+            string::utf8(b"sym"),
+            string::utf8(b"icon_uri"),
+            string::utf8(b"project_uri"),
+            stats
+        );
+
+        let address = Equipment::get_token_address(armor_name_str);
         let frog_armor_token = address_to_object<Equipment::Token>(address);
 
-        Monster::create_test_monster_with_equipment(deployer, string::utf8(armor_name));
+        Monster::create_test_monster_with_equipment(deployer, armor_name_str);
 
         let item_names = vector::empty<String>();
-        vector::push_back(&mut item_names, string::utf8(armor_name));
+        vector::push_back(&mut item_names, armor_name_str);
 
         let chances = vector<u8>[30];
         let tokens = vector[frog_armor_token];
 
 
         let test_monster = Monster::get_test_monster(deployer);
-        let reward_table = RewardTable::create_reward_table_v1(deployer, item_names, tokens, chances);
+        let reward_table = RewardTable::create_reward_table(deployer, item_names, tokens, chances);
         Mission::create_mission(1, vector[test_monster], reward_table);
         Mission::create_mission(2, vector[test_monster], reward_table);
 
@@ -133,7 +139,7 @@ module my_addr::end_to_end {
             E_CHARACTER_COUNT_NOT_MATCHING
         );
 
-        let created_characters = Character::get_all_characters_v1(player_address);
+        let created_characters = Character::get_all_characters(player_address);
         let names = vector::map(created_characters, |char| {
             let (name, _, _) = Character::deconstruct_character(char);
             name
@@ -169,7 +175,6 @@ module my_addr::end_to_end {
         let next_mission = mission + 1;
         GameManager::start_mission(player, next_mission);
         let mission = GameManager::get_current_mission(player_address);
-        debug::print(&mission);
 
 
         assert!(mission == 2, E_MISSION_NOT_MATCHING);

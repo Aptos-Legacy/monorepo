@@ -19,12 +19,7 @@ module my_addr::Character {
         experience: u64,
     }
 
-    /// [DEPRECATED] - Holds a table of users and their created character names
     struct CharacterCreationTracker has key {
-        characters: SmartTable<address, vector<String>>
-    }
-
-    struct CharacterCreationTrackerV1 has key {
         characters: vector<String>
     }
 
@@ -46,15 +41,10 @@ module my_addr::Character {
     const E_CHARACTER_NAME_ALREADY_TAKEN: u64 = 1;
 
     // ================================= INIT ================================== //
-
-    fun init_module(admin: &signer) {
-        let characters = smart_table::new<address, vector<String>>();
-
-        move_to(admin, CharacterCreationTracker { characters });
-    }
+    fun init_module(admin: &signer) {}
 
     // ================================= ENTRY ================================== //
-    public entry fun create_new_character(user: &signer, name: String) acquires CharacterCreationTrackerV1 {
+    public entry fun create_new_character(user: &signer, name: String) acquires CharacterCreationTracker {
         let user_address = signer::address_of(user);
 
         let char = Character {
@@ -69,12 +59,12 @@ module my_addr::Character {
 
 
         let tracker_address = object::create_object_address(&user_address, CHARACTERS_TRACKER_SEED);
-        if (!object::object_exists<CharacterCreationTrackerV1>(tracker_address)) {
+        if (!object::object_exists<CharacterCreationTracker>(tracker_address)) {
             create_tracker(user);
         };
 
-        ensure_character_name_is_unique_v1(user_address, name);
-        let character_tracker = borrow_global_mut<CharacterCreationTrackerV1>(tracker_address);
+        ensure_character_name_is_unique(user_address, name);
+        let character_tracker = borrow_global_mut<CharacterCreationTracker>(tracker_address);
         vector::push_back(&mut character_tracker.characters, name);
 
         /*
@@ -103,8 +93,8 @@ module my_addr::Character {
         );
     }
 
-    public(friend) fun create_tracker(user: &signer): Object<CharacterCreationTrackerV1> {
-        let tracker = CharacterCreationTrackerV1 {
+    public(friend) fun create_tracker(user: &signer): Object<CharacterCreationTracker> {
+        let tracker = CharacterCreationTracker {
             characters: vector::empty<String>()
         };
 
@@ -112,25 +102,15 @@ module my_addr::Character {
         let signer = object::generate_signer(&constructor);
 
         move_to(&signer, tracker);
-        object_from_constructor_ref<CharacterCreationTrackerV1>(&constructor)
+        object_from_constructor_ref<CharacterCreationTracker>(&constructor)
     }
 
     // ================================= GUARDS ================================== //
     fun ensure_character_name_is_unique(owner: address, name: String) acquires CharacterCreationTracker {
-        let character_tracker = borrow_global<CharacterCreationTracker>(@my_addr);
-        if (smart_table::contains(&character_tracker.characters, owner)) {
-            let user_characters = smart_table::borrow(&character_tracker.characters, owner);
-            assert!(!vector::contains(user_characters, &name), E_CHARACTER_NAME_ALREADY_TAKEN);
-        };
-    }
-
-    // NOTE: do we actually want to borrow in here? Wouldn't it be smart to feed in the object?
-    fun ensure_character_name_is_unique_v1(owner: address, name: String) acquires CharacterCreationTrackerV1 {
         let character_tracker_address = object::create_object_address(&owner, CHARACTERS_TRACKER_SEED);
-        let tracker = borrow_global<CharacterCreationTrackerV1>(character_tracker_address);
+        let tracker = borrow_global<CharacterCreationTracker>(character_tracker_address);
         assert!(!vector::contains(&tracker.characters, &name), E_CHARACTER_NAME_ALREADY_TAKEN);
     }
-
 
     // ================================= UTILS ================================== //
     fun make_character_name_seed(owner: address, name: String): vector<u8> {
@@ -149,32 +129,14 @@ module my_addr::Character {
         *borrow_global<Character>(object_address)
     }
 
+
     #[view]
-    public fun get_all_characters(
+    public(friend) fun get_all_characters(
         creator: address
     ): vector<Character> acquires Character, CharacterCreationTracker {
-        let tracker = borrow_global<CharacterCreationTracker>(@my_addr);
-        let characters = vector::empty<Character>();
-
-        if (smart_table::contains(&tracker.characters, creator)) {
-            let user_characters = smart_table::borrow(&tracker.characters, creator);
-
-            vector::for_each_ref<String>(user_characters, |char_name| {
-                vector::push_back(&mut characters, get_character(creator, *char_name));
-            });
-        };
-
-        characters
-    }
-
-
-    #[view]
-    public(friend) fun get_all_characters_v1(
-        creator: address
-    ): vector<Character> acquires Character, CharacterCreationTrackerV1 {
         let tracker_address = object::create_object_address(&creator, CHARACTERS_TRACKER_SEED);
 
-        let tracker = borrow_global<CharacterCreationTrackerV1>(tracker_address);
+        let tracker = borrow_global<CharacterCreationTracker>(tracker_address);
 
         vector::map_ref(&tracker.characters, |char_name| {
             get_character(creator, *char_name)
@@ -182,13 +144,13 @@ module my_addr::Character {
     }
 
     #[view]
-    public(friend) fun get_all_characters_from_object_v1(
+    public(friend) fun get_all_characters_from_object(
         creator: address,
-        tracker_obj: Object<CharacterCreationTrackerV1>
-    ): vector<Character> acquires Character, CharacterCreationTrackerV1 {
+        tracker_obj: Object<CharacterCreationTracker>
+    ): vector<Character> acquires Character, CharacterCreationTracker {
         //let tracker_address = object::create_object_address(&creator, CHARACTERS_TRACKER_SEED);
         let tracker_address = object::object_address(&tracker_obj);
-        let tracker = borrow_global<CharacterCreationTrackerV1>(tracker_address);
+        let tracker = borrow_global<CharacterCreationTracker>(tracker_address);
 
         vector::map_ref(&tracker.characters, |char_name| {
             get_character(creator, *char_name)
@@ -197,10 +159,10 @@ module my_addr::Character {
 
     #[view]
     public(friend) fun get_all_characters_names(
-        container: Object<CharacterCreationTrackerV1>
-    ): vector<String> acquires CharacterCreationTrackerV1 {
+        container: Object<CharacterCreationTracker>
+    ): vector<String> acquires CharacterCreationTracker {
         let tracker_address = object::object_address(&container);
-        let tracker = borrow_global<CharacterCreationTrackerV1>(tracker_address);
+        let tracker = borrow_global<CharacterCreationTracker>(tracker_address);
         tracker.characters
     }
 

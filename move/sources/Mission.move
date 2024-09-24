@@ -9,37 +9,33 @@ module my_addr::Mission {
     use std::vector;
     use my_addr::Monster;
     use my_addr::Monster::Monster;
-    use my_addr::RewardTable::RewardTableV1;
+    use my_addr::RewardTable::RewardTable;
 
     const MISSION_SEED: vector<u8> = b"missions";
 
 
-    struct MissionDefinitionV1 has store, copy {
+    struct MissionDefinition has store, copy {
         id: u64,
         // TODO: implement mission content
         monsters: vector<Object<Monster>>,
-        rewards: Object<RewardTable::RewardTableV1>,
+        rewards: Object<RewardTable::RewardTable>,
     }
 
 
-    struct MissionsHolderV1 has key {
-        missions: table::Table<u64, MissionDefinitionV1>,
+    struct MissionsHolder has key {
+        missions: table::Table<u64, MissionDefinition>,
     }
 
     struct MissionCreationEvent has store, drop {
         ids: vector<u64>,
-    }
-
-    struct MissionCreationEventV1 has store, drop {
-        ids: vector<u64>,
-        rewards: Object<RewardTable::RewardTableV1>
+        rewards: Object<RewardTable::RewardTable>
     }
 
 
     fun init_module(admin: &signer) {
-        let mission_table = table::new<u64, MissionDefinitionV1>();
+        let mission_table = table::new<u64, MissionDefinition>();
 
-        let missionsHolder = MissionsHolderV1 {
+        let missionsHolder = MissionsHolder {
             missions: mission_table
         };
         /*
@@ -52,68 +48,16 @@ module my_addr::Mission {
     }
 
     // ================================= UTILS ================================== //
-    #[view]
-    public fun get_mission_rewards_object(
-        id: u64,
-    ): Object<RewardTableV1> acquires MissionsHolderV1 {
-        let holder = borrow_global<MissionsHolderV1>(@my_addr);
-
-        let definition = table::borrow(&holder.missions, id);
-        definition.rewards
-    }
-
-    use std::option::Option;
-
-    #[view]
-    public fun get_monsters_rewards_tables(
-        id: u64,
-    ): vector<Object<RewardTableV1>> acquires MissionsHolderV1 {
-        let holder = borrow_global<MissionsHolderV1>(@my_addr);
-
-        let definition = table::borrow(&holder.missions, id);
-        let monster_objects = definition.monsters;
-
-
-        let loot_tables_objects = vector::map<Object<Monster>, Object<RewardTableV1>>(monster_objects, |obj| {
-            //let addr = object_address(obj);
-            //let monster = borrow_global<MonsterV1>(addr);
-            Monster::get_loot_table(obj)
-        });
-
-
-        loot_tables_objects
-    }
-
-    #[view]
-    public fun get_all_mission_rewards_for(id: u64): vector<Object<RewardTableV1>> acquires MissionsHolderV1 {
-        let mission_rewards = get_mission_rewards_object(id);
-        let monsters_rewards = get_monsters_rewards_tables(id);
-
-        vector::push_back(&mut monsters_rewards, mission_rewards);
-
-        monsters_rewards
-    }
-
-
-    public fun get_mission_rewards_object_v1(
-        id: u64,
-    ): Object<RewardTableV1> acquires MissionsHolderV1 {
-        // FIXME: this is a NAMED object. We need to know the admin's adress in order to get it. It's NOT stored in the @my_addr address
-        let holder = borrow_global<MissionsHolderV1>(@my_addr);
-
-        let definition = table::borrow(&holder.missions, id);
-        definition.rewards
-    }
 
 
     public fun create_mission(
         id: u64,
         monsters: vector<Object<Monster>>,
-        rewards: Object<RewardTableV1>
-    ) acquires MissionsHolderV1 {
-        let holder = borrow_global_mut<MissionsHolderV1>(@my_addr);
+        rewards: Object<RewardTable>
+    ) acquires MissionsHolder {
+        let holder = borrow_global_mut<MissionsHolder>(@my_addr);
 
-        table::add(&mut holder.missions, id, MissionDefinitionV1 {
+        table::add(&mut holder.missions, id, MissionDefinition {
             id,
             monsters,
             rewards
@@ -123,20 +67,56 @@ module my_addr::Mission {
     public fun set_mission_rewards(
         deployer: &signer,
         id: u64,
-        rewards: Object<RewardTableV1>
-    ) acquires MissionsHolderV1 {
+        rewards: Object<RewardTable>
+    ) acquires MissionsHolder {
         // FIXME: we really should have something in place to allow admin to be someone else than the actual deployer
         let holder_address = object::create_object_address(&signer::address_of(deployer), MISSION_SEED);
-        let holder = borrow_global_mut<MissionsHolderV1>(holder_address);
+        let holder = borrow_global_mut<MissionsHolder>(holder_address);
 
         let mission = table::borrow_mut(&mut holder.missions, id);
         mission.rewards = rewards;
     }
 
     // ================================= VIEWS ================================== //
+    #[view]
+    public fun get_mission_rewards_object(
+        id: u64,
+    ): Object<RewardTable> acquires MissionsHolder {
+        let holder = borrow_global<MissionsHolder>(@my_addr);
+
+        let definition = table::borrow(&holder.missions, id);
+        definition.rewards
+    }
 
 
-    // public fun get_defined_missions
+    #[view]
+    public fun get_monsters_rewards_tables(
+        id: u64,
+    ): vector<Object<RewardTable>> acquires MissionsHolder {
+        let holder = borrow_global<MissionsHolder>(@my_addr);
+
+        let definition = table::borrow(&holder.missions, id);
+        let monster_objects = definition.monsters;
+
+
+        let loot_tables_objects = vector::map<Object<Monster>, Object<RewardTable>>(monster_objects, |obj| {
+            Monster::get_loot_table(obj)
+        });
+
+
+        loot_tables_objects
+    }
+
+    #[view]
+    public fun get_all_mission_rewards_for(id: u64): vector<Object<RewardTable>> acquires MissionsHolder {
+        let mission_rewards = get_mission_rewards_object(id);
+        let monsters_rewards = get_monsters_rewards_tables(id);
+
+        vector::push_back(&mut monsters_rewards, mission_rewards);
+
+        monsters_rewards
+    }
+
 
     // ================================= TESTS ================================== //
     #[test_only]
