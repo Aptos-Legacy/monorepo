@@ -27,7 +27,7 @@ script {
             0
         );
 
-        let ref = Equipment::armor_token_address_v1(equipment_name);
+        let ref = Equipment::get_token_address(equipment_name);
         let obj = address_to_object<Equipment::Token>(ref);
 
         // Create and seed Reward Tables

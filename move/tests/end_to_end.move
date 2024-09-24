@@ -102,7 +102,7 @@ module my_addr::end_to_end {
         Equipment::create_armor_as_fungible_token_v1(deployer);
 
         let armor_name = b"Frog Armor";
-        let address = Equipment::armor_token_address_v1(string::utf8(armor_name));
+        let address = Equipment::get_token_address(string::utf8(armor_name));
         let frog_armor_token = address_to_object<Equipment::Token>(address);
 
         Monster::create_test_monster_with_equipment(deployer, string::utf8(armor_name));
@@ -158,7 +158,7 @@ module my_addr::end_to_end {
         GameManager::distribute_rewards(deployer, player_address);
 
         let frog_armor_token = object::address_to_object<Equipment::Token>(
-            Equipment::armor_token_address_v1(string::utf8(armor_name))
+            Equipment::get_token_address(string::utf8(armor_name))
         );
         assert!(Equipment::token_balance(player_address, frog_armor_token) >= 1, 0);
 

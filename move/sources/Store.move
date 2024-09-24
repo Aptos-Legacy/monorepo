@@ -1,14 +1,16 @@
 module my_addr::Store {
     use std::signer;
     use aptos_framework::object::{ExtendRef, Self, create_object_address, Object};
-    use my_addr::Equipment::Token;
+    use my_addr::Equipment::{Token, Config};
     use std::string::{String, Self};
     use std::vector;
     use aptos_std::smart_table;
     use aptos_std::smart_table::SmartTable;
     use aptos_framework::event;
     use aptos_framework::fungible_asset;
-
+    use aptos_framework::aptos_coin;
+    use aptos_framework::coin;
+    use my_addr::Equipment;
 
     #[test_only]
     use my_addr::Equipment;
@@ -48,9 +50,22 @@ module my_addr::Store {
         id: u64
     }
 
+    #[event]
+    struct UserBuysOfferEvent has store, drop {
+        buyer: address,
+        offer_id: u64,
+        price: u64
+    }
+
+    // ================================= SEEDS ================================== //
     const VAULT_SEED: vector<u8> = b"VAULT";
     const OFFERS_SEED: vector<u8> = b"OFFERS";
 
+    // ================================= ERRORS ================================== //
+    const E_NOT_ENOUGH_FUNDS: u64 = 0;
+
+
+    // ================================= INIT ================================== //
     fun init_module(sender: &signer) {
         let sender_address = signer::address_of(sender);
 
@@ -75,8 +90,32 @@ module my_addr::Store {
         });
     }
 
+
     // ================================= ENTRIES ================================== //
-    public entry fun buy_offer(id: u64) {}
+    public entry fun buy_offer(user: &signer, id: u64) acquires Offers {
+        let user_address = signer::address_of(user);
+
+        // TODO: get offer, ensure it exists
+        let offers_address = create_object_address(&@my_addr, OFFERS_SEED);
+        let offers = borrow_global_mut<Offers>(offers_address);
+        let offer = smart_table::borrow(&offers.offers, id);
+        let price = offer.price;
+
+        // TODO: ensure user has enough money
+        let user_addr = signer::address_of(user);
+        let user_balance = coin::balance<aptos_coin::AptosCoin>(user_addr);
+        assert!(user_balance >= price, E_NOT_ENOUGH_FUNDS);
+
+        coin::transfer<aptos_framework::aptos_coin::AptosCoin>(user, @my_addr, price);
+
+        Equipment::mint_from_token(offer.token, user_address, 1);
+
+        event::emit(UserBuysOfferEvent {
+            price,
+            buyer: user_address,
+            offer_id: id
+        });
+    }
 
     fun add_offer(offer: Offer) acquires Offers {
         let offers_address = create_object_address(&@my_addr, OFFERS_SEED);
@@ -161,7 +200,7 @@ module my_addr::Store {
         Equipment::init_module_for_test(sender);
         Equipment::create_test_token();
         let armor_name = b"Frog Armor";
-        let address = Equipment::armor_token_address_v1(string::utf8(armor_name));
+        let address = Equipment::get_token_address(string::utf8(armor_name));
 
         let frog_armor_token = address_to_object<Equipment::Token>(address);
 

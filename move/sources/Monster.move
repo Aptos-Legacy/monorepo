@@ -126,7 +126,7 @@ module my_addr::Monster {
         let deployer_address = signer::address_of(deployer);
         Equipment::init_module_for_test(deployer);
         let armor_name = Equipment::create_test_token();
-        let armor_token = object::address_to_object<Token>(Equipment::armor_token_address_v1(armor_name)) ;
+        let armor_token = object::address_to_object<Token>(Equipment::get_token_address(armor_name)) ;
 
         let item_names = vector<String>[string::utf8((b"Divine Hammer"))];
         let tokens = vector<Object<Token>>[armor_token];
@@ -149,7 +149,7 @@ module my_addr::Monster {
     #[test_only]
     public fun create_test_monster(deployer: &signer) {
         let armor_name = Equipment::create_test_token();
-        let armor_token = object::address_to_object<Token>(Equipment::armor_token_address_v1(armor_name)) ;
+        let armor_token = object::address_to_object<Token>(Equipment::get_token_address(armor_name)) ;
 
         let item_names = vector<String>[string::utf8((b"Divine Hammer"))];
         let tokens = vector<Object<Token>>[armor_token];
@@ -162,7 +162,7 @@ module my_addr::Monster {
 
     #[test_only]
     public fun create_test_monster_with_equipment(deployer: &signer, armor_name: String) {
-        let armor_token = object::address_to_object<Token>(Equipment::armor_token_address_v1(armor_name)) ;
+        let armor_token = object::address_to_object<Token>(Equipment::get_token_address(armor_name)) ;
 
         let item_names = vector<String>[string::utf8((b"Divine Hammer"))];
         let tokens = vector<Object<Token>>[armor_token];

@@ -3,8 +3,6 @@
 module my_addr::Equipment {
     #[test_only]
     friend my_addr::end_to_end;
-    #[test_only]
-    use aptos_framework::object::object_address;
 
     friend my_addr::GameManager;
 
@@ -49,10 +47,6 @@ module my_addr::Equipment {
         fungible_asset_burn_ref: fungible_asset::BurnRef,
     }
 
-    struct WeaponStats has key {
-        attack: u64
-    }
-
     // NOTE: we're only dealing with defense for now. Maybe we'll had more stuff in a future version
     struct ArmorStats has key {
         defense: u64,
@@ -73,7 +67,8 @@ module my_addr::Equipment {
     const E_TOKEN_DOES_NOT_EXIST: u64 = 1;
     const E_NOT_CREATOR: u64 = 2;
 
-    const ARMOR_COLLECTION_NAME: vector<u8> = b"ARMOR";
+    const EQUIPMENT_COLLECTION_NAME: vector<u8> = b"Aptos Legacy Equipment";
+
     const RESOURCE_ACCOUNT_SEED: vector<u8> = b"EQUIPMENT_RESOURCE_ACCOUNT";
     const DEFENSE_VALUE_PROPERTY_NAME: vector<u8> = b"Defense";
     const ATTACK_VALUE_PROPERTY_NAME: vector<u8> = b"Attack";
@@ -99,7 +94,7 @@ module my_addr::Equipment {
         let coll = collection::create_unlimited_collection(
             creator,
             string::utf8(b"Collection containing different types of armors. Each armor type is a separate token"),
-            string::utf8(ARMOR_COLLECTION_NAME),
+            string::utf8(EQUIPMENT_COLLECTION_NAME),
             royalty,
             string::utf8(b"https://myarmor.com")
         );
@@ -110,7 +105,7 @@ module my_addr::Equipment {
         let config = borrow_global<Config>(@my_addr);
         let admin_signer = create_signer_with_capability(&config.signer_cap);
 
-        let token = object::address_to_object<Token>(armor_token_address_v1(armor_name));
+        let token = object::address_to_object<Token>(get_token_address(armor_name));
 
         mint_internal_token(&admin_signer, token, receiver, 1);
     }
@@ -122,7 +117,7 @@ module my_addr::Equipment {
         let description = string::utf8(b"An armor made for a Frog");
 
         let name = string::utf8(b"Frog Armor");
-        let collection = string::utf8(ARMOR_COLLECTION_NAME);
+        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
 
         let constructor_ref = token::create_named_token(
             creator,
@@ -191,7 +186,7 @@ module my_addr::Equipment {
     ) acquires Config {
         let signerCap = get_signer_cap();
         let signer = create_signer_with_capability(signerCap);
-        let collection = string::utf8(ARMOR_COLLECTION_NAME);
+        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
 
         let token_constructor_ref = inner_create_fungible_token(&signer,
             collection,
@@ -211,7 +206,7 @@ module my_addr::Equipment {
         let signerCap = get_signer_cap();
         let signer = create_signer_with_capability(signerCap);
 
-        let collection = string::utf8(ARMOR_COLLECTION_NAME);
+        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
         let armor_name = string::utf8(b"Frog Armor");
         // create_armor_as_fungible_token_v1(deployer);
         let armor_description = string::utf8(b"description");
@@ -346,7 +341,7 @@ module my_addr::Equipment {
         let defense = 10;
         let royalty_config = royalty::create(5, 100, signer::address_of(creator));
 
-        let collection = string::utf8(ARMOR_COLLECTION_NAME);
+        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
 
         let constructor_ref = token::create_named_token(
             &signer,
@@ -410,13 +405,6 @@ module my_addr::Equipment {
         primary_fungible_store::deposit(receiver, fa);
     }
 
-    fun mint_internal(creator: &signer, token: Object<ArmorToken>, receiver: address, amount: u64) acquires ArmorToken {
-        let armor_token = authorized_borrow<ArmorToken>(creator, &token);
-        let fungible_asset_mint_ref = &armor_token.fungible_asset_mint_ref;
-        let fa = fungible_asset::mint(fungible_asset_mint_ref, amount);
-        primary_fungible_store::deposit(receiver, fa);
-    }
-
 
     public fun mint_from_token(
         token: Object<Token>,
@@ -447,34 +435,13 @@ module my_addr::Equipment {
         borrow_global<T>(token_address)
     }
 
-    inline fun authorized_borrow<T: key>(creator: &signer, token: &Object<T>): &ArmorToken {
-        let token_address = object::object_address(token);
-        assert!(
-            exists<ArmorToken>(token_address),
-            error::not_found(E_TOKEN_DOES_NOT_EXIST),
-        );
-
-        assert!(
-            token::creator(*token) == signer::address_of(creator),
-            error::permission_denied(E_NOT_CREATOR),
-        );
-        borrow_global<ArmorToken>(token_address)
-    }
-
 
     // ================================= VIEWS ================================== //
     #[view]
-    public fun armor_token_address_v1(token_name: String): address acquires Config {
+    public fun get_token_address(token_name: String): address acquires Config {
         let config = borrow_global<Config>(@my_addr);
         let addr = signer::address_of(&create_signer_with_capability(&config.signer_cap));
-        let token_addr = token::create_token_address(&addr, &string::utf8(ARMOR_COLLECTION_NAME), &token_name);
-        debug::print(&token_addr);
-        token_addr
-    }
-
-    #[view]
-    public fun armor_token_address(token_name: String): address {
-        let token_addr = token::create_token_address(&@my_addr, &string::utf8(ARMOR_COLLECTION_NAME), &token_name);
+        let token_addr = token::create_token_address(&addr, &string::utf8(EQUIPMENT_COLLECTION_NAME), &token_name);
         debug::print(&token_addr);
         token_addr
     }
@@ -505,7 +472,7 @@ module my_addr::Equipment {
 
     #[view]
     public fun get_collection_name(): vector<u8> {
-        ARMOR_COLLECTION_NAME
+        EQUIPMENT_COLLECTION_NAME
     }
 
     #[view]
@@ -526,7 +493,7 @@ module my_addr::Equipment {
         init_module(deployer);
 
         // Now we create a new armor type named Frog Armor
-        let collection = string::utf8(ARMOR_COLLECTION_NAME);
+        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
         let armor_name = string::utf8(b"Frog Armor");
         // create_armor_as_fungible_token_v1(deployer);
         let armor_description = string::utf8(b"description");
@@ -559,7 +526,7 @@ module my_addr::Equipment {
         mint_token_using_sig(armor_name, user1_addr);
 
         //let frog_armor_token = object::address_to_object<ArmorToken>(armor_token_address_v1(armor_name));
-        let frog_armor_token = object::address_to_object<Token>(armor_token_address_v1(armor_name));
+        let frog_armor_token = object::address_to_object<Token>(get_token_address(armor_name));
         assert!(token_balance(user1_addr, frog_armor_token) == 1, 0);
 
         // assert!(armor_balance(user1_addr, frog_armor_token) == 1, 0);
@@ -570,7 +537,7 @@ module my_addr::Equipment {
 
     #[test_only]
     public fun create_test_token(): String acquires Config {
-        let collection = string::utf8(ARMOR_COLLECTION_NAME);
+        let collection = string::utf8(EQUIPMENT_COLLECTION_NAME);
         let armor_name = string::utf8(b"Frog Armor");
         // create_armor_as_fungible_token_v1(deployer);
         let armor_description = string::utf8(b"description");
