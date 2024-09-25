@@ -4,7 +4,7 @@ export const Monster_ABI = {
   "friends": [],
   "exposed_functions": [
     {
-      "name": "create_monster_v1",
+      "name": "create_monster",
       "visibility": "public",
       "is_entry": true,
       "is_view": false,
@@ -12,7 +12,7 @@ export const Monster_ABI = {
       "params": [
         "&signer",
         "0x1::string::String",
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
       ],
       "return": []
     },
@@ -23,10 +23,10 @@ export const Monster_ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::MonsterV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::Monster>"
       ],
       "return": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
       ]
     },
     {
@@ -39,7 +39,7 @@ export const Monster_ABI = {
         "0x1::string::String"
       ],
       "return": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::MonsterV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::Monster>"
       ]
     },
     {
@@ -51,7 +51,7 @@ export const Monster_ABI = {
       "params": [
         "&signer",
         "0x1::string::String",
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
       ],
       "return": []
     }
@@ -73,27 +73,7 @@ export const Monster_ABI = {
         },
         {
           "name": "loot_table",
-          "type": "0x1::option::Option<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>>"
-        }
-      ]
-    },
-    {
-      "name": "LootTableUpdateEventV1",
-      "is_native": false,
-      "is_event": true,
-      "abilities": [
-        "drop",
-        "store"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "name",
-          "type": "0x1::string::String"
-        },
-        {
-          "name": "loot_table",
-          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
         }
       ]
     },
@@ -109,44 +89,10 @@ export const Monster_ABI = {
         {
           "name": "name",
           "type": "0x1::string::String"
-        }
-      ]
-    },
-    {
-      "name": "MonsterV0",
-      "is_native": false,
-      "is_event": false,
-      "abilities": [
-        "key"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "name",
-          "type": "0x1::string::String"
         },
         {
           "name": "loot_table",
-          "type": "0x1::option::Option<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>>"
-        }
-      ]
-    },
-    {
-      "name": "MonsterV1",
-      "is_native": false,
-      "is_event": false,
-      "abilities": [
-        "key"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "name",
-          "type": "0x1::string::String"
-        },
-        {
-          "name": "loot_table",
-          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
         }
       ]
     },
@@ -166,27 +112,7 @@ export const Monster_ABI = {
         },
         {
           "name": "loot_table",
-          "type": "0x1::option::Option<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>>"
-        }
-      ]
-    },
-    {
-      "name": "NewMonsterCreatedEventV1",
-      "is_native": false,
-      "is_event": true,
-      "abilities": [
-        "drop",
-        "store"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "name",
-          "type": "0x1::string::String"
-        },
-        {
-          "name": "loot_table",
-          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
         }
       ]
     }

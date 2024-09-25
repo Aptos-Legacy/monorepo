@@ -6,19 +6,20 @@ module my_addr::Mission {
     use aptos_framework::object::{Object, object_address};
     use my_addr::RewardTable;
     use std::signer;
+    use std::string::String;
     use std::vector;
     use my_addr::Monster;
     use my_addr::Monster::Monster;
-    use my_addr::RewardTable::RewardTable;
+    use my_addr::RewardTable::{RewardTable, GetDisplayReturn};
 
     const MISSION_SEED: vector<u8> = b"missions";
 
 
     struct MissionDefinition has store, copy {
         id: u64,
-        // TODO: implement mission content
         monsters: vector<Object<Monster>>,
         rewards: Object<RewardTable::RewardTable>,
+        gold: u64
     }
 
 
@@ -53,14 +54,16 @@ module my_addr::Mission {
     public fun create_mission(
         id: u64,
         monsters: vector<Object<Monster>>,
-        rewards: Object<RewardTable>
+        rewards: Object<RewardTable>,
+        gold: u64
     ) acquires MissionsHolder {
         let holder = borrow_global_mut<MissionsHolder>(@my_addr);
 
         table::add(&mut holder.missions, id, MissionDefinition {
             id,
             monsters,
-            rewards
+            rewards,
+            gold
         });
     }
 
@@ -108,6 +111,14 @@ module my_addr::Mission {
     }
 
     #[view]
+    public fun get_gold_reward_for(id: u64): u64 acquires MissionsHolder {
+        let holder = borrow_global<MissionsHolder>(@my_addr);
+
+        let definition = table::borrow(&holder.missions, id);
+        definition.gold
+    }
+
+    #[view]
     public fun get_all_mission_rewards_for(id: u64): vector<Object<RewardTable>> acquires MissionsHolder {
         let mission_rewards = get_mission_rewards_object(id);
         let monsters_rewards = get_monsters_rewards_tables(id);
@@ -116,6 +127,41 @@ module my_addr::Mission {
 
         monsters_rewards
     }
+
+    struct MissionRewardDisplay {
+        monster_rewards: vector<RewardTable::GetDisplayReturn>,
+        mission_rewards: vector<RewardTable::GetDisplayReturn>,
+        gold: u64
+    }
+
+    /// Get all the mission rewards as well as monster drops. We also want the icons.
+    #[view]
+    public fun get_all_mission_rewards_for_display(id: u64): MissionRewardDisplay acquires MissionsHolder {
+        let mission_rewards = get_mission_rewards_object(id);
+        let monsters_rewards = get_monsters_rewards_tables(id);
+
+        let monster_rewards_acc = vector<RewardTable::GetDisplayReturn>[];
+
+        vector::for_each<Object<RewardTable::RewardTable>>(
+            monsters_rewards,
+            |reward_object| {
+                vector::for_each<GetDisplayReturn>(
+                    RewardTable::get_reward_table_display(reward_object),
+                    |display| {
+                        vector::push_back(&mut monster_rewards_acc, display);
+                    }
+                );
+            }
+        );
+
+        MissionRewardDisplay {
+            monster_rewards: monster_rewards_acc,
+            gold: 0,
+            mission_rewards: RewardTable::get_reward_table_display(mission_rewards)
+        }
+    }
+
+
 
 
     // ================================= TESTS ================================== //

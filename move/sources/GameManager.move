@@ -18,12 +18,15 @@ module my_addr::GameManager {
     use my_addr::Character::{Character, Self};
     use my_addr::RewardTable;
     use std::signer;
+    use my_addr::Gold;
     use my_addr::Equipment;
     use my_addr::Mission;
 
 
     const E_INVALID_SUCCESS_CODE_FOR_CLAIMING: u64 = 1;
     const E_ONLY_ADMIN: u64 = 2;
+    const E_NOT_ENOUGH_GOLD_TO_LEVEL_UP: u64 = 3;
+
 
 
     const USER_MISSION_STATE_SEED: vector<u8> = b"USER_MISSION_STATE";
@@ -33,7 +36,6 @@ module my_addr::GameManager {
     const SUCCESS: u8 = 1;
     const FAILURE: u8 = 2;
     const CLAIMED: u8 = 3;
-
 
     /// Holds the status of a current mission for a player.
     struct MissionState has key {
@@ -141,6 +143,16 @@ module my_addr::GameManager {
         });
     }
 
+    const LEVEL_UP_PRICE: u64 = 100;
+
+    public entry fun level_up(player: &signer, character_name: String) {
+        let player_address = signer::address_of(player);
+        assert!(Gold::balance_of(player_address) >= LEVEL_UP_PRICE, E_NOT_ENOUGH_GOLD_TO_LEVEL_UP);
+
+        Gold::burn(player_address, LEVEL_UP_PRICE);
+        Character::level_up(player_address, character_name);
+    }
+
 
     fun ensure_is_admin(caller: address) acquires Config {
         let config = borrow_global<Config>(@my_addr);
@@ -160,6 +172,9 @@ module my_addr::GameManager {
         assert!(state.status == SUCCESS, E_INVALID_SUCCESS_CODE_FOR_CLAIMING);
         state.status = CLAIMED;
         let mission_id = (state.id as u64);
+
+        let gold_rewards = Mission::get_gold_reward_for(mission_id);
+        Gold::mint(player, gold_rewards);
 
         let mission_reward_tables = Mission::get_all_mission_rewards_for(mission_id);
 

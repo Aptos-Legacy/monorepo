@@ -131,4 +131,27 @@ module my_addr::RewardTable {
             (100 - random_value) >= chance
         }
     }
+
+    // ================================= VIEWS ================================== //
+    struct GetDisplayReturn {
+        name: String,
+        chance: u8,
+        icon: String
+    }
+
+    #[view]
+    public fun get_reward_table_display(reward_table: Object<RewardTable>): vector<GetDisplayReturn> acquires RewardTable {
+        let addr = object::object_address(&reward_table);
+        let content = borrow_global<RewardTable>(addr);
+        vector::map_ref<Item, GetDisplayReturn>(&content.items, |item| {
+            use_item(item);
+            let icon = Equipment::get_icon_for_token(item.token);
+
+            GetDisplayReturn {
+                icon,
+                name: item.name,
+                chance: item.chance
+            }
+        })
+    }
 }

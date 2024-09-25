@@ -92,7 +92,7 @@ module my_addr::Equipment {
             string::utf8(b"Collection containing different types of armors. Each armor type is a separate token"),
             string::utf8(EQUIPMENT_COLLECTION_NAME),
             royalty,
-            string::utf8(b"https://myarmor.com")
+            string::utf8(b"https://aptoslegacyapp.vercel.app/")
         );
     }
 

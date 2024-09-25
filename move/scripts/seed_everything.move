@@ -21,7 +21,7 @@ script {
             string::utf8(b"description"),
             string::utf8(b"FA"),
             string::utf8(b"description"),
-            string::utf8(b"description"),
+            string::utf8(b"https://aptoslegacyapp.vercel.app/"),
             0,
             10,
             0
@@ -31,23 +31,31 @@ script {
         let obj = address_to_object<Equipment::Token>(ref);
 
         // Create and seed Reward Tables
-        let reward_table = RewardTable::create_reward_table(
+        let mission_reward_table = RewardTable::create_reward_table(
             src,
             vector[equipment_name],
             vector[obj],
             vector<u8>[100],
         );
 
+        let monster_reward_table = RewardTable::create_reward_table(
+            src,
+            vector[equipment_name],
+            vector[obj],
+            vector<u8>[20],
+        );
+
         // Create and seed monsters
         let monster_name = string::utf8(b"Terrible Frog");
-        Monster::create_monster(src, monster_name, reward_table);
+        Monster::create_monster(src, monster_name, mission_reward_table);
 
         let monster_object = Monster::get_monster(monster_name);
 
         // Create and seed missions
         Mission::create_mission(1,
             vector[monster_object],
-            reward_table
+            mission_reward_table,
+            100
         );
 
 

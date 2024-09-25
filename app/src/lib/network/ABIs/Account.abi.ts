@@ -25,7 +25,7 @@ export const Account_ABI = {
         "address"
       ],
       "return": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTrackerV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTracker>"
       ]
     },
     {
@@ -89,7 +89,7 @@ export const Account_ABI = {
         },
         {
           "name": "characters",
-          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTrackerV1>"
+          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTracker>"
         }
       ]
     },

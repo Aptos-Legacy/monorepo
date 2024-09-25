@@ -13,6 +13,7 @@ module my_addr::end_to_end {
     use my_addr::Monster;
     use my_addr::RewardTable;
     use my_addr::Equipment;
+    use my_addr::Gold;
 
 
     const E_NO_ACCOUNT_FOUND: u64 = 1;
@@ -21,69 +22,16 @@ module my_addr::end_to_end {
     const E_MISSION_NOT_MATCHING: u64 = 4;
     const E_MISSION_STATUS_NOT_MATCHING: u64 = 5;
 
-    #[test(deployer= @0xCAFEE, framework= @aptos_framework)]
-    fun test_happy_path(deployer: &signer, framework: &signer) {
-        // ================================= Setup ================================== //
-        let account_name = b"hey";
-        let character_name = b"Frog";
-        let deployer_address = signer::address_of(deployer);
-
-        GameManager::init_module_for_test(deployer);
-        Character::init_module_for_test(deployer);
-        Mission::init_module_for_test(deployer);
-
-
-        // ================================= Create account and characters ================================== //
-        GameManager::create_account(deployer, string::utf8(account_name));
-
-        assert!(Account::has_account(deployer_address), E_NO_ACCOUNT_FOUND);
-        //let account = Account::get_player_account(deployer_address);
-
-        // FIXME: Account and characters have nothing in common as Character handles all the character creation and storage logic without at any point referencing the Account resource
-        Character::create_new_character(deployer, string::utf8(character_name));
-        let created_characters = Character::get_all_characters(deployer_address);
-        let names = vector::map(created_characters, |char| {
-            let (name, _, _) = Character::deconstruct_character(char);
-            name
-        });
-        assert!(vector::length(&names) == 1, E_CHARACTER_COUNT_NOT_MATCHING);
-        assert!(*vector::borrow(&names, 0) == string::utf8(character_name), E_CHARACTER_COUNT_NOT_MATCHING);
-
-        // ================================= Start Mission ================================== //
-        let mission = GameManager::get_current_mission(deployer_address);
-
-        GameManager::start_mission(deployer, mission);
-
-        assert!(GameManager::get_current_mission(deployer_address) == 1, E_MISSION_NOT_MATCHING);
-
-        // ================================= End Mission ================================== //
-        GameManager::end_mission(deployer, true);
-
-        assert!(GameManager::is_mission_successful(deployer_address), E_MISSION_STATUS_NOT_MATCHING);
-
-
-        // ================================= Start second Mission ================================== //
-        let mission = GameManager::get_current_mission(deployer_address);
-
-        let next_mission = mission + 1;
-        GameManager::start_mission(deployer, next_mission);
-        let mission = GameManager::get_current_mission(deployer_address);
-
-
-        assert!(mission == 2, E_MISSION_NOT_MATCHING);
-
-        GameManager::end_mission(deployer, true);
-        assert!(GameManager::is_mission_successful(deployer_address), E_MISSION_STATUS_NOT_MATCHING);
-    }
-
 
     #[test(deployer= @my_addr, player= @0xCAFEE, framework= @aptos_framework)]
-    fun test_happy_path_v1(deployer: &signer, player: &signer, framework: &signer) {
+    fun test_happy_path(deployer: &signer, player: &signer, framework: &signer) {
         // ================================= Setup ================================== //
         let account_name = b"hey";
         let character_name = b"Frog";
         let deployer_address = signer::address_of(deployer);
         let player_address = signer::address_of(player);
+
+        let mission_gold_reward = 100;
 
         GameManager::init_module_for_test(deployer);
         Character::init_module_for_test(deployer);
@@ -91,6 +39,7 @@ module my_addr::end_to_end {
         Equipment::init_module_for_test(deployer);
 
         randomness::initialize_for_testing(framework);
+        Gold::init_module_for_test(deployer);
 
 
         // ================================= Create Missions and rewards ================================== //
@@ -122,8 +71,8 @@ module my_addr::end_to_end {
 
         let test_monster = Monster::get_test_monster(deployer);
         let reward_table = RewardTable::create_reward_table(deployer, item_names, tokens, chances);
-        Mission::create_mission(1, vector[test_monster], reward_table);
-        Mission::create_mission(2, vector[test_monster], reward_table);
+        Mission::create_mission(1, vector[test_monster], reward_table, mission_gold_reward);
+        Mission::create_mission(2, vector[test_monster], reward_table, mission_gold_reward);
 
         // ================================= Create account and characters ================================== //
         GameManager::create_account(player, string::utf8(account_name));
@@ -141,7 +90,7 @@ module my_addr::end_to_end {
 
         let created_characters = Character::get_all_characters(player_address);
         let names = vector::map(created_characters, |char| {
-            let (name, _, _) = Character::deconstruct_character(char);
+            let (name, _) = Character::deconstruct_character(char);
             name
         });
         assert!(vector::length(&names) == 1, E_CHARACTER_COUNT_NOT_MATCHING);
@@ -162,12 +111,17 @@ module my_addr::end_to_end {
 
         // ================================= Distribute and Claim Rewards ================================== //
         GameManager::distribute_rewards(deployer, player_address);
+        assert!(Gold::balance_of(player_address) == mission_gold_reward, 100) ;
 
         let frog_armor_token = object::address_to_object<Equipment::Token>(
             Equipment::get_token_address(string::utf8(armor_name))
         );
         assert!(Equipment::token_balance(player_address, frog_armor_token) >= 1, 0);
 
+        // ================================= Level up ================================== //
+        GameManager::level_up(player, string::utf8(character_name));
+        assert!(Character::get_character_level(player_address, string::utf8(character_name)) == 2, 0);
+        assert!(Gold::balance_of(player_address) == 0, 0) ;
 
         // ================================= Start second Mission ================================== //
         let mission = GameManager::get_current_mission(player_address);

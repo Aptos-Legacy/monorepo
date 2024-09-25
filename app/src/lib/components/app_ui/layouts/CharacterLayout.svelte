@@ -81,7 +81,7 @@
 	$inspect(character);
 </script>
 
-{#snippet ayaya(equipment?: typeof item)}
+{#snippet EquipmentIcon(equipment?: typeof item)}
 	<!-- TODO: handle equipment type for 'not equipped' placeholder icon -->
 	<div>
 		<div
@@ -133,11 +133,11 @@
 					<div class="space-y-1">
 						<div class="text-xs font-medium uppercase">Weapon</div>
 
-						{@render ayaya(character.equipped.weapon)}
+						{@render EquipmentIcon(character.equipped.weapon)}
 					</div>
 					<div class="space-y-1">
 						<div class="text-xs font-medium uppercase">Armor</div>
-						{@render ayaya(character.equipped.armor)}
+						{@render EquipmentIcon(character.equipped.armor)}
 					</div>
 				</div>
 			</div>
@@ -165,7 +165,7 @@
 							onclick={() => equip(item, 'weapon')}
 							class="[&_.icon--container]:hover:border-white"
 						>
-							{@render ayaya(item)}
+							{@render EquipmentIcon(item)}
 						</button>
 					{/each}
 				</div>

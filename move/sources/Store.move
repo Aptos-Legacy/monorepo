@@ -1,6 +1,6 @@
 module my_addr::Store {
     use std::signer;
-    use aptos_framework::object::{ExtendRef, Self, create_object_address, Object};
+    use aptos_framework::object::{Self, create_object_address, Object};
     use my_addr::Equipment::Token;
     use std::string;
     use std::string::String;
@@ -24,12 +24,6 @@ module my_addr::Store {
         name: String,
         token: Object<Token>,
         price: u64
-    }
-
-    /// Vault stores both the APT sent by buyers as well as the signing capabilities for items to buy
-    struct Vault has key {
-        extend_ref: ExtendRef,
-        admin: address,
     }
 
 
@@ -57,7 +51,6 @@ module my_addr::Store {
     }
 
     // ================================= SEEDS ================================== //
-    const VAULT_SEED: vector<u8> = b"VAULT";
     const OFFERS_SEED: vector<u8> = b"OFFERS";
 
     // ================================= ERRORS ================================== //
@@ -66,20 +59,8 @@ module my_addr::Store {
 
     // ================================= INIT ================================== //
     fun init_module(sender: &signer) {
-        let sender_address = signer::address_of(sender);
-
-        // TODO: maybe I could just replace this with a regular payment address
-        let vault_constructor_ref = &object::create_named_object(sender, VAULT_SEED);
-        let vault_signer = &object::generate_signer(vault_constructor_ref);
-
-        move_to(vault_signer, Vault {
-            extend_ref: object::generate_extend_ref(vault_constructor_ref),
-            admin: sender_address,
-        });
-
         let offers_constructor_ref = &object::create_named_object(sender, OFFERS_SEED);
         let offers_signer = &object::generate_signer(offers_constructor_ref);
-
 
         let offers_table = smart_table::new<u64, Offer>();
 

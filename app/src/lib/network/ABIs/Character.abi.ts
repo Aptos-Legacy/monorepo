@@ -28,7 +28,7 @@ export const Character_ABI = {
         "&signer"
       ],
       "return": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTrackerV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTracker>"
       ]
     },
     {
@@ -48,7 +48,7 @@ export const Character_ABI = {
     },
     {
       "name": "get_all_characters",
-      "visibility": "public",
+      "visibility": "friend",
       "is_entry": false,
       "is_view": true,
       "generic_type_params": [],
@@ -60,14 +60,14 @@ export const Character_ABI = {
       ]
     },
     {
-      "name": "get_all_characters_from_object_v1",
+      "name": "get_all_characters_from_object",
       "visibility": "friend",
       "is_entry": false,
       "is_view": true,
       "generic_type_params": [],
       "params": [
         "address",
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTrackerV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTracker>"
       ],
       "return": [
         "vector<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::Character>"
@@ -80,23 +80,10 @@ export const Character_ABI = {
       "is_view": true,
       "generic_type_params": [],
       "params": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTrackerV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::CharacterCreationTracker>"
       ],
       "return": [
         "vector<0x1::string::String>"
-      ]
-    },
-    {
-      "name": "get_all_characters_v1",
-      "visibility": "friend",
-      "is_entry": false,
-      "is_view": true,
-      "generic_type_params": [],
-      "params": [
-        "address"
-      ],
-      "return": [
-        "vector<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::Character>"
       ]
     },
     {
@@ -163,21 +150,6 @@ export const Character_ABI = {
     },
     {
       "name": "CharacterCreationTracker",
-      "is_native": false,
-      "is_event": false,
-      "abilities": [
-        "key"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "characters",
-          "type": "0x1::smart_table::SmartTable<address, vector<0x1::string::String>>"
-        }
-      ]
-    },
-    {
-      "name": "CharacterCreationTrackerV1",
       "is_native": false,
       "is_event": false,
       "abilities": [

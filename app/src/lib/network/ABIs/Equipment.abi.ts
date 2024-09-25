@@ -2,7 +2,8 @@ export const Equipment_ABI = {
   "address": "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171",
   "name": "Equipment",
   "friends": [
-    "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::GameManager"
+    "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::GameManager",
+    "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Store"
   ],
   "exposed_functions": [
     {
@@ -18,67 +19,6 @@ export const Equipment_ABI = {
       "return": [
         "u64"
       ]
-    },
-    {
-      "name": "armor_token_address",
-      "visibility": "public",
-      "is_entry": false,
-      "is_view": true,
-      "generic_type_params": [],
-      "params": [
-        "0x1::string::String"
-      ],
-      "return": [
-        "address"
-      ]
-    },
-    {
-      "name": "armor_token_address_v1",
-      "visibility": "public",
-      "is_entry": false,
-      "is_view": true,
-      "generic_type_params": [],
-      "params": [
-        "0x1::string::String"
-      ],
-      "return": [
-        "address"
-      ]
-    },
-    {
-      "name": "create_armor_as_fungible_token",
-      "visibility": "public",
-      "is_entry": false,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "&signer"
-      ],
-      "return": []
-    },
-    {
-      "name": "create_armor_as_fungible_token_v1",
-      "visibility": "friend",
-      "is_entry": false,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "&signer"
-      ],
-      "return": []
-    },
-    {
-      "name": "create_armor_as_fungible_token_v2",
-      "visibility": "public",
-      "is_entry": false,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "&signer",
-        "0x1::string::String",
-        "0x1::string::String"
-      ],
-      "return": []
     },
     {
       "name": "create_armor_collection",
@@ -136,8 +76,47 @@ export const Equipment_ABI = {
       ]
     },
     {
-      "name": "mint_from_token",
+      "name": "get_icon_for_token",
       "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Equipment::Token>"
+      ],
+      "return": [
+        "0x1::string::String"
+      ]
+    },
+    {
+      "name": "get_stats",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Equipment::Token>"
+      ],
+      "return": [
+        "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Equipment::Stats"
+      ]
+    },
+    {
+      "name": "get_token_address",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "0x1::string::String"
+      ],
+      "return": [
+        "address"
+      ]
+    },
+    {
+      "name": "mint_from_token",
+      "visibility": "friend",
       "is_entry": false,
       "is_view": false,
       "generic_type_params": [],
@@ -170,21 +149,6 @@ export const Equipment_ABI = {
     }
   ],
   "structs": [
-    {
-      "name": "ArmorStats",
-      "is_native": false,
-      "is_event": false,
-      "abilities": [
-        "key"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "defense",
-          "type": "u64"
-        }
-      ]
-    },
     {
       "name": "ArmorToken",
       "is_native": false,
@@ -268,21 +232,6 @@ export const Equipment_ABI = {
         {
           "name": "fungible_asset_burn_ref",
           "type": "0x1::fungible_asset::BurnRef"
-        }
-      ]
-    },
-    {
-      "name": "WeaponStats",
-      "is_native": false,
-      "is_event": false,
-      "abilities": [
-        "key"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "attack",
-          "type": "u64"
         }
       ]
     }

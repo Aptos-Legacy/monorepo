@@ -11,8 +11,8 @@ export const Mission_ABI = {
       "generic_type_params": [],
       "params": [
         "u64",
-        "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::MonsterV1>>",
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+        "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::Monster>>",
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
       ],
       "return": []
     },
@@ -26,7 +26,20 @@ export const Mission_ABI = {
         "u64"
       ],
       "return": [
-        "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>>"
+        "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>>"
+      ]
+    },
+    {
+      "name": "get_all_mission_rewards_for_display",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "u64"
+      ],
+      "return": [
+        "vector<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::GetDisplayReturn>"
       ]
     },
     {
@@ -39,20 +52,7 @@ export const Mission_ABI = {
         "u64"
       ],
       "return": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
-      ]
-    },
-    {
-      "name": "get_mission_rewards_object_v1",
-      "visibility": "public",
-      "is_entry": false,
-      "is_view": false,
-      "generic_type_params": [],
-      "params": [
-        "u64"
-      ],
-      "return": [
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
       ]
     },
     {
@@ -65,7 +65,7 @@ export const Mission_ABI = {
         "u64"
       ],
       "return": [
-        "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>>"
+        "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>>"
       ]
     },
     {
@@ -77,7 +77,7 @@ export const Mission_ABI = {
       "params": [
         "&signer",
         "u64",
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
       ],
       "return": []
     }
@@ -96,31 +96,15 @@ export const Mission_ABI = {
         {
           "name": "ids",
           "type": "vector<u64>"
-        }
-      ]
-    },
-    {
-      "name": "MissionCreationEventV1",
-      "is_native": false,
-      "is_event": false,
-      "abilities": [
-        "drop",
-        "store"
-      ],
-      "generic_type_params": [],
-      "fields": [
-        {
-          "name": "ids",
-          "type": "vector<u64>"
         },
         {
           "name": "rewards",
-          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
         }
       ]
     },
     {
-      "name": "MissionDefinitionV1",
+      "name": "MissionDefinition",
       "is_native": false,
       "is_event": false,
       "abilities": [
@@ -135,16 +119,16 @@ export const Mission_ABI = {
         },
         {
           "name": "monsters",
-          "type": "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::MonsterV1>>"
+          "type": "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::Monster>>"
         },
         {
           "name": "rewards",
-          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTableV1>"
+          "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
         }
       ]
     },
     {
-      "name": "MissionsHolderV1",
+      "name": "MissionsHolder",
       "is_native": false,
       "is_event": false,
       "abilities": [
@@ -154,7 +138,7 @@ export const Mission_ABI = {
       "fields": [
         {
           "name": "missions",
-          "type": "0x1::table::Table<u64, 0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Mission::MissionDefinitionV1>"
+          "type": "0x1::table::Table<u64, 0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Mission::MissionDefinition>"
         }
       ]
     }

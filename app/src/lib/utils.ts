@@ -66,7 +66,11 @@ const STATS_FORMATTER = new Intl.NumberFormat(undefined, {
 
 const GOLD_FORMATTER = new Intl.NumberFormat(undefined, {});
 
-export function useFormatter(type: 'aptos' | 'gold' | 'stats') {
+const PERCENT_FORMATTER = new Intl.NumberFormat(undefined, {
+	style: "percent"
+});
+
+export function useFormatter(type: 'aptos' | 'gold' | 'stats' | 'percent') {
 	switch (type) {
 		case 'aptos':
 			return APTOS_FORMATTER;
@@ -75,5 +79,7 @@ export function useFormatter(type: 'aptos' | 'gold' | 'stats') {
 			return GOLD_FORMATTER;
 		case 'stats':
 			return STATS_FORMATTER;
+		case 'percent':
+			return PERCENT_FORMATTER;
 	}
 }

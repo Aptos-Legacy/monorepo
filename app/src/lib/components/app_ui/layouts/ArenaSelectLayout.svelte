@@ -4,7 +4,8 @@
 	 */
 	import B_BUTTON from '$lib/assets/icons/buttons/b.png';
 	import A_BUTTON from '$lib/assets/icons/buttons/a.png';
-	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import SandySandsIcon from '$lib/assets/icons/levels/sandy_sands.png';
+
 	import { ARENAS } from '$lib/data/game/arenas';
 	import { Button } from '$lib/components/ui/button';
 	import { SURF } from '$lib/network/surf';
@@ -19,6 +20,26 @@
 	import EntityCard from '../Molecules/EntityCard.svelte';
 	import CurrencyEntityCard from '../Molecules/CurrencyEntityCard.svelte';
 	import { useGameState } from '$lib/state/gamestate.svelte';
+	import { getAptosQueryContext } from '$lib/network/aptos';
+	import { onMount } from 'svelte';
+	import { createSurfClient } from '@thalalabs/surf';
+	import { SvelteMap } from 'svelte/reactivity';
+	import Spinner from '../Atoms/Spinner.svelte';
+
+	const aptosQueryClient = getAptosQueryContext();
+	const gameState = useGameState();
+
+	type Reward = {
+		chance: number;
+		icon: string;
+		name: string;
+	};
+
+	let missionRewards = new SvelteMap<
+		number,
+		Promise<[{ monster_rewards: Reward[]; mission_rewards: Reward[]; gold: string }]>
+	>();
+	const surf = createSurfClient(aptosQueryClient).useABI(ABIs.Mission_ABI);
 
 	function startMission() {
 		let missionID = selectedArena.id;
@@ -29,7 +50,29 @@
 		});
 	}
 
-	const gameState = useGameState();
+	function selectNewArena(id: number) {
+		if (!missionRewards.has(id)) {
+			let rewardsPromise = surf.view.get_all_mission_rewards_for_display({
+				typeArguments: [],
+				functionArguments: [id]
+			});
+			// @ts-expect-error surf returns unknown but we're typing in the missionRewards declaration
+			missionRewards.set(id, rewardsPromise);
+		}
+
+		selectedArena.id = id;
+	}
+
+	onMount(() => {
+		missionRewards.set(
+			1,
+			// @ts-expect-error surf returns unknown but we're typing in the missionRewards declaration
+			surf.view.get_all_mission_rewards_for_display({
+				typeArguments: [],
+				functionArguments: [1]
+			})
+		);
+	});
 </script>
 
 <FullScreenLayout {onExit} title={'Arena'}>
@@ -40,7 +83,7 @@
 				<button
 					data-selected={selected}
 					class="w-full rounded border p-4 text-left duration-200"
-					onclick={() => (selectedArena = arena)}
+					onclick={() => selectNewArena(arena.id)}
 				>
 					<div class="font-semibold md:text-xl">
 						{arena.name}
@@ -53,30 +96,47 @@
 		</div>
 		<div class="col-span-2 flex flex-col space-y-4 overflow-y-auto">
 			<div>
-				<div class="">
-					<h2 class="text-lg md:text-xl">
-						{selectedArena.name}
-					</h2>
-					<p>{selectedArena.description}</p>
+				<div class="flex items-center space-x-3">
+					<img src={SandySandsIcon} alt="Sandy Sands logo" width="84" />
+					<div>
+						<h2 class="text-lg md:text-xl lg:text-2xl">
+							{selectedArena.name}
+						</h2>
+						<p>{selectedArena.description}</p>
+					</div>
 				</div>
 				<div class="mt-8 py-2 md:py-4">
-					<div>
-						<h3>Mission Rewards</h3>
-						<div class="mt-2 flex space-x-2 overflow-x-auto">
-							{#each selectedArena.rewards as reward}
-								<CurrencyEntityCard amount={100}></CurrencyEntityCard>
-							{/each}
-						</div>
-					</div>
+					{#if missionRewards.has(selectedArena.id)}
+						{#await missionRewards.get(selectedArena.id)}
+							<Spinner></Spinner>
+						{:then resolved}
+							{@const [rewards] = resolved!}
+							{@const gold = Number(rewards.gold)}
+							<div>
+								<h3>Mission Rewards</h3>
 
-					<div class="mt-4 md:mt-8">
-						<h3>Monster Loot</h3>
-						<div class="mt-2 flex space-x-2 overflow-x-auto">
-							{#each selectedArena.monsters as monster}
-								<EntityCard></EntityCard>
-							{/each}
-						</div>
-					</div>
+								<div class="mt-2 flex items-start space-x-2 overflow-x-auto">
+									{#if gold !== 0}
+										<CurrencyEntityCard amount={gold}></CurrencyEntityCard>
+									{/if}
+									{#each rewards.mission_rewards as reward}
+										<EntityCard chance={reward.chance} name={reward.name} icon={reward.icon}
+										></EntityCard>
+									{/each}
+								</div>
+							</div>
+
+							<div class="mt-4 md:mt-8">
+								<h3>Monster Loot</h3>
+								<div class="mt-2 flex items-start space-x-2 overflow-x-auto">
+									{#each rewards.monster_rewards as reward}
+										<EntityCard chance={reward.chance} name={reward.name} icon={reward.icon}
+										></EntityCard>
+									{/each}
+								</div>
+							</div>
+						{/await}
+					{/if}
 				</div>
 			</div>
 			<div class="absolute bottom-0 right-2 flex items-center justify-end space-x-4 py-4">
