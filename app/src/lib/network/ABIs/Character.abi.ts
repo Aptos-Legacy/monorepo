@@ -42,7 +42,6 @@ export const Character_ABI = {
       ],
       "return": [
         "0x1::string::String",
-        "u64",
         "u8"
       ]
     },
@@ -99,6 +98,32 @@ export const Character_ABI = {
       "return": [
         "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::Character"
       ]
+    },
+    {
+      "name": "get_character_level",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "address",
+        "0x1::string::String"
+      ],
+      "return": [
+        "u8"
+      ]
+    },
+    {
+      "name": "level_up",
+      "visibility": "friend",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "address",
+        "0x1::string::String"
+      ],
+      "return": []
     }
   ],
   "structs": [
@@ -121,10 +146,6 @@ export const Character_ABI = {
         {
           "name": "level",
           "type": "u8"
-        },
-        {
-          "name": "experience",
-          "type": "u64"
         }
       ]
     },
@@ -160,6 +181,55 @@ export const Character_ABI = {
         {
           "name": "characters",
           "type": "vector<0x1::string::String>"
+        }
+      ]
+    },
+    {
+      "name": "CharacterLevelUpEvent",
+      "is_native": false,
+      "is_event": true,
+      "abilities": [
+        "drop",
+        "store"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "player",
+          "type": "address"
+        },
+        {
+          "name": "character",
+          "type": "0x1::string::String"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [
+        "copy",
+        "drop",
+        "key"
+      ],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "attack",
+          "type": "u64"
+        },
+        {
+          "name": "defense",
+          "type": "u64"
+        },
+        {
+          "name": "health",
+          "type": "u64"
         }
       ]
     }

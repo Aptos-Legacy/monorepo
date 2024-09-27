@@ -2,8 +2,7 @@ import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 import { PUBLIC_NETWORK } from '$env/static/public';
 import { getContext, setContext } from 'svelte';
 
-const network = (() => {
-	console.log(PUBLIC_NETWORK)
+export function getNetwork() {
 	switch (PUBLIC_NETWORK) {
 		case 'localnet':
 			return Network.LOCAL;
@@ -16,13 +15,13 @@ const network = (() => {
 		default:
 			throw 'No network defined in environment files';
 	}
-})();
+}
+
+const network = getNetwork();
 
 const config = new AptosConfig({
 	network: network
 });
-
-console.log(config)
 
 export const APTOS = new Aptos(config);
 

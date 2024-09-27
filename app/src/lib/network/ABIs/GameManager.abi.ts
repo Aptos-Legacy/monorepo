@@ -123,6 +123,18 @@ export const GameManager_ABI = {
       ]
     },
     {
+      "name": "level_up",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::string::String"
+      ],
+      "return": []
+    },
+    {
       "name": "start_mission",
       "visibility": "public",
       "is_entry": true,

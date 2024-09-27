@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import FullScreenLayout from './FullScreenLayout.svelte';
-	import { getAptosQueryContext } from '$lib/network/aptos';
+	import { APTOS, getAptosQueryContext } from '$lib/network/aptos';
 	import { createSurfClient } from '@thalalabs/surf';
 	import * as ABIs from '$lib/network/ABIs';
-	import { number, string } from 'zod';
 	import EquipmentIcon from '../Atoms/EquipmentIcon.svelte';
 	import AptosCurrencyBadge from '../Molecules/AptosCurrencyBadge.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -26,6 +25,44 @@
 			functionArguments: []
 		});
 	});
+	import { createEntryPayload } from '@thalalabs/surf';
+	import { getWalletContext } from '../wallet/context';
+	import Spinner from '../Atoms/Spinner.svelte';
+
+	const walletContext = getWalletContext();
+
+	let isBuying = $state(false);
+	let isDialogOpen = $state(false);
+
+	type Stats = {
+		attack: number;
+		defense: number;
+		health: number;
+	};
+
+	async function buyItem(offerID: number) {
+		isBuying = true;
+
+		
+
+		try {
+			const payload = createEntryPayload(ABIs.Store_ABI, {
+				function: 'buy_offer',
+				typeArguments: [],
+				functionArguments: [offerID]
+			});
+
+			const response = await walletContext.signAndSubmitTransaction({
+				data: payload
+			});
+			console.dir(response);
+		} catch (error) {
+			console.error(error);
+		} finally {
+			isBuying = false;
+			isDialogOpen = false;
+		}
+	}
 </script>
 
 <FullScreenLayout {onExit} title={'Store'}>
@@ -38,11 +75,11 @@
 				{:then resolved}
 					{@const [offers] = resolved}
 					{#each offers as offer (offer.id)}
-						<Dialog.Root>
+						<Dialog.Root bind:open={isDialogOpen}>
 							<Dialog.Trigger asChild let:builder>
 								<div class="flex flex-col items-center space-y-1 rounded-lg p-1 text-center">
 									<EquipmentIcon equipment={offer}></EquipmentIcon>
-									<button class="[&>*]:hover:border-white [&>*]:duration-150" use:builder.action>
+									<button class="[&>*]:duration-150 [&>*]:hover:border-white" use:builder.action>
 										<AptosCurrencyBadge balance={offer.price}></AptosCurrencyBadge>
 									</button>
 								</div>
@@ -51,9 +88,12 @@
 								<Dialog.Header>
 									<Dialog.Title>Buy {offer.name}?</Dialog.Title>
 								</Dialog.Header>
-
 								<Dialog.Footer>
-									<Button>Yep</Button>
+									{#if isBuying}
+										<Spinner></Spinner>
+									{:else}
+										<Button onclick={() => buyItem(offer.id)}>Yep</Button>
+									{/if}
 								</Dialog.Footer>
 							</Dialog.Content>
 						</Dialog.Root>

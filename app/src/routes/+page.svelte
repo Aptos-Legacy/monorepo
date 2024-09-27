@@ -1,57 +1,41 @@
 <script lang="ts">
-	import { Canvas } from '@threlte/core';
-	import { Debug, World } from '@threlte/rapier';
-
-	import Root from '$lib/components/app_ui/Root.svelte';
-	import ExploreLayout from '$lib/components/app_ui/layouts/ExploreLayout.svelte';
-	import ArenaSelectLayout from '$lib/components/app_ui/layouts/ArenaSelectLayout.svelte';
-	import StoreLayout from '$lib/components/app_ui/layouts/StoreLayout.svelte';
-	import CharacterLayout from '$lib/components/app_ui/layouts/CharacterLayout.svelte';
-	import MissionScene from '$lib/scenes/Mission/MissionScene.svelte';
+	import Game from '$lib/components/app_ui/Game.svelte';
+	import AccountView from '$lib/components/app_ui/Views/Account/AccountView.svelte';
+	import { getWalletContext } from '$lib/components/app_ui/wallet/context';
 	import { useGameState } from '$lib/state/gamestate.svelte';
-	import HomeScene from '$lib/scenes/HomeScene.svelte';
-	import { AvailableLayouts } from '$lib/types/Layouts';
+	import type { Character } from '$lib/state/user.svelte';
 
-	const gameState = useGameState();
-	let currentLayout = $derived(gameState.currentLayout);
+	// We'll be showing the Accountview until the user is
+	// - Connected to an account
+	// - Using a character
+	let gameState = useGameState();
 
-	let isInMission = $derived(gameState.currentMission);
+	let character: Character | null = $state({
+		name: 'MegaKnight',
+		experience: 0,
+		level: 1
+	});
+
+	gameState.character = character;
+
+	const wallet = getWalletContext();
+	$effect(() => {
+		console.log(wallet.account?.address);
+	});
 </script>
 
-<div class="min-h-screen">
-	<Canvas>
-		<World>
-			<Debug />
-			{#if isInMission}
-				<MissionScene></MissionScene>
-			{:else}
-				<HomeScene></HomeScene>
-			{/if}
-		</World>
-	</Canvas>
-</div>
-<Root>
-	{#if currentLayout === AvailableLayouts.Explore}
-		<ExploreLayout></ExploreLayout>
-	{/if}
+{#if gameState.character}
+	<Game></Game>
+{:else}
+	<AccountView></AccountView>
+{/if}
 
-	{#if currentLayout === AvailableLayouts.ArenaSelect}
-		<ArenaSelectLayout onExit={() => gameState.navigateTo(AvailableLayouts.Explore)}
-		></ArenaSelectLayout>
-	{/if}
-
-	{#if currentLayout === AvailableLayouts.Store}
-		<StoreLayout onExit={() => gameState.navigateTo(AvailableLayouts.Explore)}></StoreLayout>
-	{/if}
-
-	{#if currentLayout === AvailableLayouts.Character}
-		<CharacterLayout onExit={() => gameState.navigateTo(AvailableLayouts.Explore)}
-		></CharacterLayout>
-	{/if}
-</Root>
-
-<style>
-	:global(canvas) {
-		@apply min-h-screen;
-	}
-</style>
+{#if !wallet.account}
+	<button
+		class="pointer-events-auto absolute bottom-2 left-2 z-50 border"
+		onclick={() => {
+			console.log('clicked');
+			wallet.connect('Petra');
+		}}>Connect to wallet</button
+	>
+{/if}

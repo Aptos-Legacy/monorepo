@@ -3,10 +3,14 @@
 	import { setContext } from 'svelte';
 	import '../app.css';
 	import { setAptosQueryContext } from '$lib/network/aptos';
+	import WalletProvider from '$lib/components/app_ui/wallet/provider.svelte';
+
+	let {children} = $props();
 
 	setContext(CONTEXT_KEY, GAME_STATE);
 	setAptosQueryContext();
-
 </script>
 
-<slot></slot>
+<WalletProvider>
+	{@render children()}
+</WalletProvider>

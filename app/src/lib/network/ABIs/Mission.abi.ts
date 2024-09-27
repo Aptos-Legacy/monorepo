@@ -12,7 +12,8 @@ export const Mission_ABI = {
       "params": [
         "u64",
         "vector<0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Monster::Monster>>",
-        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
+        "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>",
+        "u64"
       ],
       "return": []
     },
@@ -39,7 +40,20 @@ export const Mission_ABI = {
         "u64"
       ],
       "return": [
-        "vector<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::GetDisplayReturn>"
+        "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Mission::MissionRewardDisplay"
+      ]
+    },
+    {
+      "name": "get_gold_reward_for",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "u64"
+      ],
+      "return": [
+        "u64"
       ]
     },
     {
@@ -124,6 +138,31 @@ export const Mission_ABI = {
         {
           "name": "rewards",
           "type": "0x1::object::Object<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::RewardTable>"
+        },
+        {
+          "name": "gold",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "MissionRewardDisplay",
+      "is_native": false,
+      "is_event": false,
+      "abilities": [],
+      "generic_type_params": [],
+      "fields": [
+        {
+          "name": "monster_rewards",
+          "type": "vector<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::GetDisplayReturn>"
+        },
+        {
+          "name": "mission_rewards",
+          "type": "vector<0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::RewardTable::GetDisplayReturn>"
+        },
+        {
+          "name": "gold",
+          "type": "u64"
         }
       ]
     },

@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { SURF, type Surf } from '$lib/network/surf';
 	import { UserState } from '$lib/state/user.svelte';
+	import { getWalletContext } from '../../wallet/context';
 	import ClickToStart from './ClickToStart.svelte';
 	import Connected from './Connected.svelte';
 
@@ -17,9 +18,6 @@
 
 	//let { client }: { client: Surf } = $props();
 
-	let userAddress =
-		'0x2dc08391f7cc82cafa028d49854640676afc0e520d62f954bcc349c5d834f590' as `0x${string}`;
-
 	enum ScreenStatus {
 		Awaiting,
 		Connecting,
@@ -30,25 +28,73 @@
 
 	let status = $state<ScreenStatus>(ScreenStatus.Awaiting);
 
-	let userState = new UserState(userAddress, SURF);
-	// TODO: check if user actually has an account. If he doesn't, we'll want to create one
+	let userState = new UserState(null, SURF);
+
+	let walletContext = getWalletContext();
+
+	let googleWallet = $derived.by(() => {
+		return walletContext.wallets.find((w) => w.name.toLowerCase() === 'continue with google')!;
+	});
+
+	$inspect(walletContext.walletCore?.account);
+
+	$effect(() => {
+		if (walletContext.account) {
+			userState.userAddress = walletContext.account.address as `0x${string}`;
+		}
+	});
+
+	async function createNewAccount(name: string) {
+		const payload = userState.createAccountPayload(name);
+		const response = await walletContext.signAndSubmitTransaction({
+			data: payload
+		});
+		console.dir(response);
+	}
+
+	async function createNewCharacter(name: string) {
+		const payload = userState.createCharacterPayload(name);
+		const response = await walletContext.signAndSubmitTransaction({
+			data: payload
+		});
+
+		userState.characters = userState.getCharacters(userState.userAddress!);
+		console.dir(response);
+	}
+
+	let accountQuery = $derived(userState.gameAccount);
+	let charactersQuery = $derived(userState.characters);
 </script>
 
-<main class="flex min-h-screen min-w-full flex-col  p-12">
-	<div class="mx-auto grid w-2/3 flex-1 grid-rows-9 [&>*]:border">
+<main class="flex min-h-screen min-w-full flex-col p-12">
+	<div class="mx-auto w-full grid min-w-[66%] flex-1 grid-rows-9 [&>*]:border">
 		<div class="row-span-6 flex flex-col items-center justify-center">
-			<div>Logo</div>
-			<h1>Eternal Odyssey</h1>
+			<img src="/icons/Aptos Legacy Logo.png" width="120" alt="Aptos Legacy Logo" />
+			<h1>Aptos Legacy</h1>
 		</div>
 
 		<!-- TODO: insert content depending on state here -->
 
 		<div class="row-span-3 flex items-center justify-center">
-			{#if status === ScreenStatus.Awaiting}
-				<ClickToStart onclick={() => (status = ScreenStatus.Connecting)}></ClickToStart>
-			{/if}
-			{#if status === ScreenStatus.Connecting}
-				<Connected accountQuery={userState.gameAccount} charactersQuery={userState.characters}></Connected>
+			{#if walletContext.connected}
+				{#if status === ScreenStatus.Awaiting}
+					<ClickToStart onclick={() => (status = ScreenStatus.Connecting)}></ClickToStart>
+				{/if}
+				{#if status === ScreenStatus.Connecting}
+					<Connected
+						onAccountCreation={createNewAccount}
+						onCharacterCreation={createNewCharacter}
+						{accountQuery}
+						{charactersQuery}
+					></Connected>
+				{/if}
+			{:else if googleWallet}
+				<Button class="space-x-2" onclick={() => walletContext.connect(googleWallet.name)}>
+					<img src={googleWallet.icon} alt="Google Logo" />
+					<div>
+						{googleWallet.name}
+					</div>
+				</Button>
 			{/if}
 		</div>
 	</div>

@@ -3,6 +3,14 @@
 	import AptosLogo from '$lib/assets/icons/currencies/aptos.svg';
 	import GoldLogo from '$lib/assets/icons/currencies/gold.png';
 	import { useFormatter } from '$lib/utils';
+	import { APTOS } from '$lib/network/aptos';
+	import { getWalletContext } from '../wallet/context';
+	import { onMount } from 'svelte';
+	import Spinner from '../Atoms/Spinner.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { createEntryPayload } from '@thalalabs/surf';
+	import { GameManager_ABI } from '$lib/network/ABIs';
+	import { useGameState } from '$lib/state/gamestate.svelte';
 
 	let { onExit }: { onExit: VoidFunction } = $props();
 
@@ -29,25 +37,20 @@
 		stats: equipmentStats
 	};
 
-	let equipped = $state({
-		weapon: null,
-		armor: null
-	});
-
 	let character = $state({
 		name: 'Frog Character',
 		stats: characterStats,
-		equipped,
+		equipped: null,
 		level: 1,
 		experience: 2400
 	});
 
-	const inventory = new Array(10).fill(0).map((_) => item);
+	//const inventory = new Array(10).fill(0).map((_) => item);
 
 	async function equip(equipment: typeof item, slot: 'weapon' | 'armor') {
 		console.log('equip', slot);
-		character.equipped[slot] = equipment;
-		// TODO: handle transaction on move side
+		// TODO: handle transaction on move side instead tbh
+		character.equipped = equipment;
 	}
 
 	async function unequip() {}
@@ -69,23 +72,102 @@
 			health: 0
 		};
 
-		let equippedWeaponStats = character.equipped.weapon?.stats || acc;
-		let equippedArmorStats = character.equipped.armor?.stats || acc;
+		let equippedWeaponStats = character.equipped?.stats || acc;
 
-		acc.attack = equippedWeaponStats.attack || 0 + equippedArmorStats.attack || 0;
-		acc.defense = equippedWeaponStats.defense || 0 + equippedArmorStats.defense || 0;
-		acc.health = equippedWeaponStats.health || 0 + equippedArmorStats.health || 0;
-		
-		totalEquipmentStats = acc;
+		totalEquipmentStats = equippedWeaponStats;
 	});
 	$inspect(character);
+
+	const walletContext = getWalletContext();
+
+	type Metadata = Awaited<ReturnType<typeof APTOS.getFungibleAssetMetadataByAssetType>>;
+
+	async function dothing() {
+		const owned = await APTOS.getCurrentFungibleAssetBalances({
+			options: {
+				where: {
+					owner_address: {
+						_eq: walletContext.account!.address
+					}
+				}
+			}
+		});
+
+		const equipments = owned.filter((o) => o.asset_type !== '0x1::aptos_coin::AptosCoin');
+
+		const assetInfo = (
+			await Promise.all(
+				equipments.map(async (o) => {
+					let statResource = await APTOS.getAccountResource({
+						accountAddress: o.asset_type!,
+						resourceType:
+							'0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Equipment::Stats'
+					});
+
+					const metadata = await APTOS.getFungibleAssetMetadataByAssetType({
+						assetType: o.asset_type!
+					});
+					console.dir(statResource);
+
+					statResource = Object.fromEntries(
+						Object.entries(statResource)
+							.map((o) => {
+								const [key, val] = o;
+								return [key, Number(val)];
+							})
+							.filter((v) => {
+								return v[1] !== 0;
+							})
+					);
+					return { [o.asset_type!]: { stats: statResource as Partial<Stats>, metadata } };
+				})
+			)
+		).reduce(
+			(p, c) => {
+				return {
+					...p,
+					...c
+				};
+			},
+			{} as Record<string, { stats: Stats; metadata: Metadata }>
+		);
+
+		return equipments.map((e) => {
+			const equipmentStats = assetInfo[e.asset_type!];
+			return { ...e, ...equipmentStats };
+		});
+	}
+	let inventory = $state<ReturnType<typeof dothing>>(null!);
+
+	onMount(() => {
+		inventory = dothing();
+	});
+
+	// TODO: Get aptos balance
+	// TODO: Get Gold balance
+	// TODO: get currently equipped
+	// TODO: Allow level upping
+
+	let gameState = useGameState();
+
+	async function levelUp(characterName: string) {
+		const payload = createEntryPayload(GameManager_ABI, {
+			function: 'level_up',
+			functionArguments: [characterName],
+			typeArguments: []
+		});
+
+		walletContext.signAndSubmitTransaction({
+			data: payload
+		});
+	}
 </script>
 
 {#snippet EquipmentIcon(equipment?: typeof item)}
 	<!-- TODO: handle equipment type for 'not equipped' placeholder icon -->
 	<div>
 		<div
-			class="icon--container aspect-square w-20 rounded-md border-2 duration-100 {equipment
+			class="icon--container aspect-square w-20 rounded-md border-2 bg-contain bg-center duration-100 {equipment
 				? ''
 				: 'opacity-40'}"
 			style="background-image: url({equipment?.icon || '/textures/icons/armor-vest.svg'});"
@@ -94,14 +176,10 @@
 			<div class="text-sm">
 				{equipment.name}
 			</div>
-
-			{@const nonZeroStats = STATS.map((s) => [s, equipmentStats[s]])
-				.filter((v) => v[1] !== 0)
-				.map((v) => v[0]) as Stat[]}
 			<ul class="mt-1 text-xs">
-				{#each nonZeroStats as stat}
+				{#each Object.entries(equipment.stats) as stat}
 					<li>
-						{statsFormatter.format(equipmentStats[stat])} <span class="capitalize">{stat}</span>
+						{statsFormatter.format(stat[1])} <span class="capitalize">{stat[0]}</span>
 					</li>
 				{/each}
 			</ul>
@@ -112,8 +190,17 @@
 <FullScreenLayout {onExit} title={'Character'}>
 	<div class="flex flex-grow items-stretch gap-6">
 		<div class=" min-w-[300px] space-y-8">
-			<div class="text-lg font-medium">{character.name}</div>
+			<div>
+				<div class="text-lg font-medium">{character.name}</div>
+				<div>Lvl. {character.level}</div>
 
+				<Button
+					class="mt-4"
+					onclick={() => {
+						levelUp(gameState.character!.name);
+					}}>Level Up (100 gold)</Button
+				>
+			</div>
 			<div>
 				<h3 class="text-sm">Your Stats</h3>
 				<div class="grid grid-cols-2 gap-4 py-2">
@@ -121,7 +208,11 @@
 						<div>
 							<h4 class="text-xs uppercase">{stat}</h4>
 							<div>
-								{characterStats[stat]} + {totalEquipmentStats[stat]}
+								{characterStats[stat]} +
+								<span
+									class={totalEquipmentStats[stat] > 0 ? 'text-green-500' : 'text-muted-foreground'}
+									>{totalEquipmentStats[stat] || 0}</span
+								>
 							</div>
 						</div>
 					{/each}
@@ -130,15 +221,7 @@
 			<div>
 				<h3>Current Equipment</h3>
 				<div class="grid grid-cols-2 gap-4 py-2">
-					<div class="space-y-1">
-						<div class="text-xs font-medium uppercase">Weapon</div>
-
-						{@render EquipmentIcon(character.equipped.weapon)}
-					</div>
-					<div class="space-y-1">
-						<div class="text-xs font-medium uppercase">Armor</div>
-						{@render EquipmentIcon(character.equipped.armor)}
-					</div>
+					{@render EquipmentIcon(character.equipped)}
 				</div>
 			</div>
 		</div>
@@ -160,14 +243,25 @@
 			<div class="flex-grow">
 				<h3>Inventory</h3>
 				<div class="mt-2 flex flex-wrap gap-4">
-					{#each inventory as item}
-						<button
-							onclick={() => equip(item, 'weapon')}
-							class="[&_.icon--container]:hover:border-white"
-						>
-							{@render EquipmentIcon(item)}
-						</button>
-					{/each}
+					{#if inventory}
+						{#await inventory}
+							<Spinner></Spinner>
+						{:then resolvedInventory}
+							{#each resolvedInventory as item}
+								{@const equipment = {
+									name: item.metadata.name,
+									icon: item.metadata.icon_uri,
+									stats: item.stats
+								}}
+								<button
+									onclick={() => equip(equipment, 'weapon')}
+									class="[&_.icon--container]:hover:border-white"
+								>
+									{@render EquipmentIcon(equipment)}
+								</button>
+							{/each}
+						{/await}
+					{/if}
 				</div>
 			</div>
 		</div>

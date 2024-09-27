@@ -2,6 +2,7 @@ import type { BasePrompt } from '$lib/game/prompts/prompts';
 import { getContext } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 import { AvailableLayouts } from '$lib/types/Layouts';
+import type { Character } from './user.svelte';
 
 interface Mission {
 	id: number;
@@ -12,6 +13,7 @@ interface Mission {
 export class GameState {
 	prompts = new SvelteMap<string, BasePrompt>();
 	currentLayout = $state(AvailableLayouts.Explore);
+	character = $state<Character | null>(null);
 
 	currentMission = $state<Mission | null>(null);
 
@@ -32,7 +34,7 @@ export class GameState {
 
 		// TODO: Get the mission's content
 
-		this.cleanPrompts()
+		this.cleanPrompts();
 		this.navigateTo(AvailableLayouts.Explore);
 		this.currentMission = {
 			content: [],
@@ -42,7 +44,7 @@ export class GameState {
 	}
 
 	async endMission(status: 'success' | 'failure') {
-		this.cleanPrompts()
+		this.cleanPrompts();
 
 		// TODO: set end state
 		// TODO: claim rewards
@@ -53,7 +55,7 @@ export class GameState {
 
 	private cleanPrompts() {
 		this.prompts.clear();
-		console.log(this.prompts)
+		console.log(this.prompts);
 	}
 }
 

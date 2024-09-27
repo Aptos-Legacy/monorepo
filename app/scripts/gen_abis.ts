@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Define your network and contract address
-const NETWORK = 'localnet';
+const NETWORK: string = 'localnet';
 const CONTRACT_ADDRESS = '0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171';
 
 // Helper function to fetch ABI for a module
