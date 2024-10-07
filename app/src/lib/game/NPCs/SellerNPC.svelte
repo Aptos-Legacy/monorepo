@@ -13,9 +13,10 @@
 	const promptID = 'seller::start_trading';
 
 	const prompt = new UINavigationPrompt('Start Trading', AvailableLayouts.Store, MessageSquare);
+	let { ...rest } = $props();
 </script>
 
-<BaseNpc position={[3, 1.5, 3]}>
+<BaseNpc {...rest}>
 	{#snippet colliders()}
 		<CollisionGroups groups={[PLAYER_COLLISION_GROUP]}>
 			<Collider
