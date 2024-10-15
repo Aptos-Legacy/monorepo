@@ -71,7 +71,7 @@ script {
 
         // Create and seed monsters
         let monster_name = string::utf8(b"Terrible Frog");
-        Monster::create_monster(src, monster_name, mission_reward_table);
+        Monster::create_monster(src, monster_name, monster_reward_table);
 
         let monster_object = Monster::get_monster(monster_name);
 

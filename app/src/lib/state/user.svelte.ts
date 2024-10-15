@@ -1,6 +1,6 @@
 import type { Surf } from '$lib/network/surf';
 import * as ABIs from '$lib/network/ABIs';
-import { createEntryPayload, createSurfClient } from '@thalalabs/surf';
+import { createEntryPayload, createSurfClient, createViewPayload } from '@thalalabs/surf';
 import type { Account } from '@aptos-labs/ts-sdk';
 import type { AccountInfo } from '@aptos-labs/wallet-adapter-core';
 
@@ -13,21 +13,14 @@ export type GameAccount = {
 
 type Address = `0x${string}`;
 
-export type Character = { name: string; level: number; experience: number };
+export type Character = { name: string; level: number };
 
 export class UserState {
 	surf: Surf;
 	userAddress = $state<Address | null>(null);
 	gameAccount = $state<Promise<GameAccount | null>>();
-	characters = $derived.by(() => {
-		if (this.gameAccount) {
-			return this.gameAccount.then((_) => {
-				return this.getCharacters(this.userAddress!);
-			});
-		} else {
-			return [];
-		}
-	});
+	characters = $state<Promise<Character[]> | null>(null);
+	currentCharacter = $state<string | null>(null);
 
 	aptosBalance = $state(0);
 	goldBalance = $state(0);
@@ -38,17 +31,22 @@ export class UserState {
 		this.surf = surf;
 
 		$effect(() => {
-			console.log('running useraddress effect');
 			if (this.userAddress) {
 				this.gameAccount = this.getAccount(this.userAddress)!;
 			} else {
 				this.gameAccount = Promise.resolve(null);
 			}
 		});
-	}
 
-	async refreshBalances() {
-		
+		$effect(() => {
+			if (this.gameAccount) {
+				this.characters = this.gameAccount.then((_) => {
+					return this.getCharacters(this.userAddress!);
+				});
+			} else {
+				this.characters = null;
+			}
+		});
 	}
 
 	async getAccount(userAddress: `0x${string}`) {
@@ -75,6 +73,10 @@ export class UserState {
 		})) as unknown as Character[][];
 
 		return characters;
+	}
+
+	useCharacter(name: string) {
+		this.currentCharacter = name;
 	}
 
 	createAccountPayload(name: string) {

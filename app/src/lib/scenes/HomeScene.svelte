@@ -15,6 +15,8 @@
 	import SellerNpc from '$lib/game/NPCs/SellerNPC.svelte';
 	import MissionNpc from '$lib/game/NPCs/MissionNPC.svelte';
 	import BuildingBlacksmithBlue from '$lib/assets/models/buildings/building_blacksmith_blue.svelte';
+	import BuildingTavern from '$lib/assets/models/buildings/building_tavern_yellow.svelte';
+
 	import { DEG2RAD } from 'three/src/math/MathUtils.js';
 	import Random from '$lib/game/environment/Random.svelte';
 
@@ -58,6 +60,8 @@
 
 <BuildingBlacksmithBlue rotation.y={25 * DEG2RAD} position={[-6, 0.5, 0]} scale={5}
 ></BuildingBlacksmithBlue>
+
+<BuildingTavern rotation.y={-50 * DEG2RAD} position={[6, 0.5, 0]} scale={5}></BuildingTavern>
 {#if $sky}
 	<T.Mesh position.y={-10} scale.y={0.5} rotation.y={rotation}>
 		<T.SphereGeometry args={[300, 8, 8]} />
@@ -68,22 +72,8 @@
 <T.DirectionalLight castShadow position={[-10, 20, -10]} intensity={1.6} color={0xffff00} />
 <T.AmbientLight intensity={0.8} castShadow />
 
-<Debug />
 
 <T.GridHelper args={[50]} position.y={0.01} />
-<!-- 
-<CollisionGroups groups={[0, 15]}>
-	<AutoColliders shape={'cuboid'} position={[0, -0.5, 0]}>
-		<T.Mesh
-			receiveShadow
-			geometry={new BoxGeometry(100, 1, 100)}
-			material={new MeshStandardMaterial()}
-		/>
-	</AutoColliders>
-</CollisionGroups>
- -->
-<Debug />
-
 <T.GridHelper args={[50]} position.y={0.01} />
 
 {#if $grass}
@@ -100,4 +90,14 @@
 	</CollisionGroups>
 {/if}
 
-<Random></Random>
+<T.Group position={[-12, 0, -12]}>
+	<Random></Random>
+</T.Group>
+
+<T.Group position={[-12, 0, -10]}>
+	<Random></Random>
+</T.Group>
+
+<T.Group position={[10, 0, -4]}>
+	<Random></Random>
+</T.Group>

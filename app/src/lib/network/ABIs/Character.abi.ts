@@ -114,6 +114,19 @@ export const Character_ABI = {
       ]
     },
     {
+      "name": "get_stats_for_level",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": true,
+      "generic_type_params": [],
+      "params": [
+        "u64"
+      ],
+      "return": [
+        "0x60167390ae3ab5902a45fc9e80dd0040100924fedd23d46b77781bd71c168171::Character::Stats"
+      ]
+    },
+    {
       "name": "level_up",
       "visibility": "friend",
       "is_entry": false,

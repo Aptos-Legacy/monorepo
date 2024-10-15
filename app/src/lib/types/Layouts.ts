@@ -1,7 +1,8 @@
 export enum AvailableLayouts {
-    Explore,
-    ArenaSelect,
-    Character,
-    Store,
-    Guild
+	Explore,
+	ArenaSelect,
+	Character,
+	Store,
+	Settings,
+    MissionResult
 }

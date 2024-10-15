@@ -7,6 +7,7 @@
 	import BaseNpc from './BaseNPC.svelte';
 	import { AvailableLayouts } from '$lib/types/Layouts';
 	import { getUserData } from '$lib/types/Context';
+	import Tavern from '$lib/assets/models/npc/Tavern.svelte';
 
 	const gameState = useGameState();
 
@@ -22,6 +23,9 @@
 </script>
 
 <BaseNpc {...rest}>
+	{#snippet mesh()}
+		<Tavern />
+	{/snippet}
 	{#snippet colliders()}
 		<CollisionGroups groups={[PLAYER_COLLISION_GROUP]}>
 			<Collider
@@ -35,8 +39,6 @@
 					}
 				}}
 				onsensorexit={(e) => {
-					console.log('exiting mission npc sensor');
-
 					gameState.removePrompt(promptID);
 				}}
 			/>

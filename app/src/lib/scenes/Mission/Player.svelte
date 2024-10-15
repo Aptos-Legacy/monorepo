@@ -8,17 +8,20 @@
 	import { getUserData, type UserDataContext } from '$lib/types/Context';
 	import Knight from '$lib/assets/models/Knight.svelte';
 	import { MONSTER_COLLISION_GROUP, PLAYER_COLLISION_GROUP } from '$lib/constants/game';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	let {
 		position = $bindable(),
 		radius = 0.5,
 		height = 1,
-		speed = 6
+		speed = 6,
+		onHit
 	}: {
 		position: [x: number, y: number, z: number];
 		radius: number;
 		speed: number;
 		height: number;
+		onHit: (tags: string[]) => Promise<void>;
 	} = $props();
 
 	let capsule: Object3D = $state(null!);
@@ -95,7 +98,6 @@
 	let onAttack: VoidFunction = $state(null!);
 
 	function onKeyDown(e: KeyboardEvent) {
-		// console.log("keydown: ", `|${e.code}|`, `|${e.key}|`)
 		switch (e.code) {
 			case 'KeyS':
 			case 'ArrowDown':
@@ -115,8 +117,10 @@
 				break;
 			case ' ':
 			case 'Space':
-				console.log('attack');
 				onAttack();
+				if (onHit) {
+					onHit([...inRange]);
+				}
 				break;
 			default:
 				break;
@@ -149,6 +153,8 @@
 	const userData: UserDataContext = {
 		tag: 'Player'
 	};
+
+	let inRange = new SvelteSet<string>();
 </script>
 
 <svelte:window on:keydown|preventDefault={onKeyDown} on:keyup={onKeyUp} />
@@ -170,12 +176,18 @@
 						const data = getUserData(e.targetRigidBody);
 						if (data && data.tag) {
 							if (data.tag.startsWith('Monster')) {
-								console.log('entered ', data.tag);
+								inRange.add(data.tag);
 							}
 						}
 					}}
 					onsensorexit={(e) => {
-						console.log('exit :roowow');
+						const data = getUserData(e.targetRigidBody);
+
+						if (data && data.tag) {
+							if (data.tag.startsWith('Monster')) {
+								inRange.delete(data.tag);
+							}
+						}
 					}}
 				/>
 			</CollisionGroups>

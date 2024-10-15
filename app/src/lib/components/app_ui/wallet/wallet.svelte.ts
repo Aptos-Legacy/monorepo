@@ -21,10 +21,7 @@ export class AptosWalletAdapter {
 	isLoading = $state(true);
 	walletCore = $state<WalletCore>(null!);
 	wallets = $state<ReadonlyArray<Wallet | AptosStandardSupportedWallet>>([]);
-	//account = $state<AccountInfo | null>(null);
 
-	// FIXME: this shouldn't work, we should be using the on events instead
-	//account = $derived(this.walletCore?.account || null);
 	account = $derived.by(() => {
 		if (this.connected) {
 			return this.walletCore.account;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Character, GameAccount } from '$lib/state/user.svelte';
+	import type { Character, GameAccount, UserState } from '$lib/state/user.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Spinner from '../../Atoms/Spinner.svelte';
 	import { PlusIcon } from 'lucide-svelte';
@@ -9,6 +9,9 @@
 	import { Label } from '$lib/components/ui/label';
 	import { getWalletContext } from '../../wallet/context';
 	import { getUserData } from '$lib/types/Context';
+
+	import KnightPortait from '$lib/assets/portraits/Knight.png';
+	import { getContext } from 'svelte';
 
 	let {
 		accountQuery,
@@ -30,6 +33,8 @@
 	let isCreatingCharacter = $state(false);
 
 	let isCreateCharacterDialogOpen = $state(false);
+
+	const userState = getContext('USER') as UserState;
 </script>
 
 <!--
@@ -43,27 +48,41 @@
 	</div>
 {:then gameAccount}
 	{#if gameAccount}
-		<div class="py-4">
+		<div class="w-full py-4">
 			<div class="text-center text-sm">
 				Connected as <span class="block text-2xl font-medium">{gameAccount.name}</span>
 			</div>
 
 			{#await charactersQuery then characters}
-				<div class="mt-4 grid grid-cols-4 grid-rows-1 gap-4">
+				<div class="mt-4 grid w-full grid-cols-6 grid-rows-3 gap-4">
 					{#each characters as char}
-						<button class="flex flex-col items-center justify-center rounded-md border px-4">
+						<button
+							onclick={() => (userState.currentCharacter = char.name)}
+							class="hover:border-primary col-span-2 flex items-center space-x-4 rounded-md border px-4 duration-150"
+						>
 							<div>
-								{char.name}
+								<img
+									src={KnightPortait}
+									alt="Portrait"
+									class="aspect-square rounded border-2 border-white"
+									width="72"
+								/>
 							</div>
+							<div class="flex flex-col items-start">
+								<div class="text-lg font-medium">
+									{char.name}
+								</div>
 
-							<div>
-								LVL. {char.level}
+								<div>
+									LVL. {char.level}
+								</div>
 							</div>
 						</button>
 					{/each}
 					{#if characters.length < 4}
 						<Dialog.Root bind:open={isCreateCharacterDialogOpen}>
-							<Dialog.Trigger class="min-h-[100px] text-pretty rounded-md border px-4"
+							<Dialog.Trigger
+								class="hover:border-primary col-span-2 col-start-1 min-h-[100px] text-pretty rounded-md border px-4 duration-150"
 								>Create new Character</Dialog.Trigger
 							>
 							<Dialog.Content>
@@ -79,7 +98,7 @@
 										placeholder="MegaKnight"
 										bind:value={characterNameInput}
 									/>
-									<p class="text-sm text-muted-foreground">At least 3 characters long.</p>
+									<p class="text-muted-foreground text-sm">At least 3 characters long.</p>
 								</div>
 								<Dialog.Footer>
 									<Button
@@ -120,7 +139,7 @@
 						placeholder="Gamer123"
 						bind:value={accountNameInput}
 					/>
-					<p class="text-sm text-muted-foreground">At least 3 characters long.</p>
+					<p class="text-muted-foreground text-sm">At least 3 characters long.</p>
 				</div>
 				<Dialog.Footer>
 					<Button

@@ -214,6 +214,16 @@ module my_addr::Character {
         object::address_to_object<Stats>(addr)
     }
 
+    #[view]
+    public fun get_stats_for_level(level: u64): Stats acquires Stats{
+        let seed = make_level_stats_seed(level);
+        let addr = create_object_address(&@my_addr, seed);
+
+        let stats = borrow_global<Stats>(addr);
+        *stats
+        //(stats.health, stats.attack, stats.defense)
+    }
+
     // ================================= VIEW ================================== //
 
     #[view]

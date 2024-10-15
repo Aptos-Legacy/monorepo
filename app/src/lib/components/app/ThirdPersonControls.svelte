@@ -4,23 +4,6 @@
 
 	export let object: Object3D;
 	export let rotateSpeed = 1.0;
-	/*
-	$: if (object) {
-		// console.log(object)
-		// object.position.y = 10
-		// // Calculate the direction vector towards (0, 0, 0)
-		// const target = new Vector3(0, 0, 0)
-		// const direction = target.clone().sub(object.position).normalize()
-		// // Extract the forward direction from the object's current rotation matrix
-		// const currentDirection = new Vector3(0, 1, 0)
-		// currentDirection.applyQuaternion(object.quaternion)
-		// // Calculate the axis and angle to rotate the object
-		// const rotationAxis = currentDirection.clone().cross(direction).normalize()
-		// const rotationAngle = Math.acos(currentDirection.dot(direction))
-		// // Rotate the object using rotateOnAxis()
-		// object.rotateOnAxis(rotationAxis, rotationAngle)
-	}
-		*/
 
 	export let idealOffset = { x: -0.5, y: 3, z: -4 };
 	export let idealLookAt = { x: 0, y: 1, z: 5 };

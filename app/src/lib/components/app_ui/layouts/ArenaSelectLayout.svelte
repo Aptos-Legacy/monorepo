@@ -25,6 +25,7 @@
 	import { createSurfClient } from '@thalalabs/surf';
 	import { SvelteMap } from 'svelte/reactivity';
 	import Spinner from '../Atoms/Spinner.svelte';
+	import { getWalletContext } from '../wallet/context';
 
 	const aptosQueryClient = getAptosQueryContext();
 	const gameState = useGameState();
@@ -41,14 +42,6 @@
 	>();
 	const surf = createSurfClient(aptosQueryClient).useABI(ABIs.Mission_ABI);
 
-	function startMission() {
-		let missionID = selectedArena.id;
-		SURF.useABI(ABIs.GameManager_ABI).entry.start_mission({
-			typeArguments: [],
-			account: null,
-			functionArguments: [missionID]
-		});
-	}
 
 	function selectNewArena(id: number) {
 		if (!missionRewards.has(id)) {
@@ -63,6 +56,7 @@
 		selectedArena.id = id;
 	}
 
+	let wallet = getWalletContext();
 	onMount(() => {
 		missionRewards.set(
 			1,
@@ -75,7 +69,7 @@
 	});
 </script>
 
-<FullScreenLayout {onExit} title={'Arena'}>
+<FullScreenLayout {onExit} title={'Quests'}>
 	<div class="grid flex-grow grid-cols-3 gap-4 overflow-hidden p-2 md:gap-8 md:p-4 lg:p-8">
 		<div class="space-y-3 overflow-y-auto px-4">
 			{#each arenas as arena (arena.id)}
@@ -145,7 +139,7 @@
 					Back
 				</Button>
 				<Button
-					onclick={() => gameState.startNewMission(selectedArena.id)}
+					onclick={() => gameState.startNewMission(wallet, selectedArena.id)}
 					class="flex items-center bg-transparent"
 					variant="ghost"
 				>
@@ -225,14 +219,14 @@
  -->
 <style lang="postcss">
 	button[data-selected='true'] {
-		@apply scale-105 bg-white text-background;
+		@apply text-background scale-105 bg-white;
 	}
 
 	button[data-selected='false']:hover {
-		@apply scale-105 border-primary;
+		@apply border-primary scale-105;
 	}
 
 	h3 {
-		@apply text-sm font-semibold uppercase text-muted-foreground;
+		@apply text-muted-foreground text-sm font-semibold uppercase;
 	}
 </style>

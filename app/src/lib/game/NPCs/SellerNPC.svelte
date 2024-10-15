@@ -7,6 +7,7 @@
 	import { UINavigationPrompt } from '../prompts/prompts';
 	import BaseNpc from './BaseNPC.svelte';
 	import { getUserData } from '$lib/types/Context';
+	import Shop from '$lib/assets/models/npc/Shop.svelte';
 
 	const gameState = useGameState();
 
@@ -16,7 +17,11 @@
 	let { ...rest } = $props();
 </script>
 
-<BaseNpc {...rest}>
+<BaseNpc {...rest} >
+
+	{#snippet mesh()}
+		<Shop />
+	{/snippet}
 	{#snippet colliders()}
 		<CollisionGroups groups={[PLAYER_COLLISION_GROUP]}>
 			<Collider

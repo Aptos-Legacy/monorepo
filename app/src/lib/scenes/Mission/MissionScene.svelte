@@ -15,7 +15,7 @@
 	import { GROUND_COLLISION_GROUP, PLAYER_COLLISION_GROUP } from '$lib/constants/game';
 	import { useGameState } from '$lib/state/gamestate.svelte';
 
-	let playerPosition = $state([0, 3, 14]);
+	let playerPosition = $state([2, 3, 18]);
 
 	const grass = useTexture('/textures/sprites/pixel-grass.png', {
 		transform: (texture) => {
@@ -48,14 +48,29 @@
         As well as managing the progress state for this mission, loading all the assets and so on
     */
 
-	let monsterPosition = $state([0, 9, 8]);
+	let monsterPosition = $state([0.5, 0.5, -2]);
 
 	const gameState = useGameState();
+	import { injectLookAtPlugin } from '$lib/plugins/lookAt';
+	import { getWalletContext } from '$lib/components/app_ui/wallet/context';
+	import Random from '$lib/game/environment/Random.svelte';
+	injectLookAtPlugin();
 
-	
+	const monsterID = 1;
+
+	let onMonsterKill;
+
+	let wallet = getWalletContext();
+
+	async function onHit(tags: string[]) {
+		if (tags.filter((t) => t === `Monster::${monsterID}`)[0]) {
+			onMonsterKill();
+
+			// Monster is dead, so we'll wrap up the mission
+			await gameState.endMission(wallet);
+		}
+	}
 </script>
-
-<Monster id={4} position={monsterPosition}></Monster>
 
 {#if $sky}
 	<T.Mesh position.y={-10} scale.y={0.5}>
@@ -63,10 +78,9 @@
 		<T.MeshBasicMaterial map={$sky} side={BackSide} />
 	</T.Mesh>
 {/if}
-<T.DirectionalLight castShadow position={[8, 20, -3]} />
-<T.AmbientLight intensity={0.2} />
 
-<T.GridHelper args={[50]} position.y={0.01} />
+<T.DirectionalLight castShadow position={[-10, 20, -10]} intensity={1.6} color={0xffff00} />
+<T.AmbientLight intensity={0.8} castShadow />
 
 <CollisionGroups groups={[PLAYER_COLLISION_GROUP, GROUND_COLLISION_GROUP]}>
 	<AutoColliders shape={'cuboid'} position={[0, -0.5, 0]}>
@@ -77,10 +91,6 @@
 		/>
 	</AutoColliders>
 </CollisionGroups>
-
-<Debug />
-
-<T.GridHelper args={[50]} position.y={0.01} />
 
 {#if $grass}
 	<CollisionGroups groups={[PLAYER_COLLISION_GROUP, GROUND_COLLISION_GROUP]}>
@@ -96,4 +106,17 @@
 	</CollisionGroups>
 {/if}
 
-<Player bind:position={playerPosition}></Player>
+<Player bind:position={playerPosition} {onHit}></Player>
+<Monster bind:onKill={onMonsterKill} id={monsterID} position={monsterPosition}></Monster>
+
+<T.Group position={[-12, 0, -12]}>
+	<Random></Random>
+</T.Group>
+
+<T.Group position={[-12, 0, -8]}>
+	<Random></Random>
+</T.Group>
+
+<T.Group position={[10, 0, -20]}>
+	<Random></Random>
+</T.Group>

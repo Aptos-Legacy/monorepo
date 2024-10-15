@@ -5,14 +5,19 @@
 	import { useFormatter } from '$lib/utils';
 	import { APTOS } from '$lib/network/aptos';
 	import { getWalletContext } from '../wallet/context';
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import Spinner from '../Atoms/Spinner.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { createEntryPayload } from '@thalalabs/surf';
 	import { GameManager_ABI } from '$lib/network/ABIs';
 	import { useGameState } from '$lib/state/gamestate.svelte';
+	import type { UserState } from '$lib/state/user.svelte';
+	import { sleep } from '@aptos-labs/ts-sdk';
+	import * as ABIs from '$lib/network/ABIs';
+	import { SURF } from '$lib/network/surf';
 
 	let { onExit }: { onExit: VoidFunction } = $props();
+	let gameState = useGameState();
 
 	const STATS = ['health', 'attack', 'defense'] as const;
 	type Stat = (typeof STATS)[number];
@@ -22,7 +27,7 @@
 	let characterStats: Stats = {
 		health: 100,
 		defense: 8,
-		attack: 0
+		attack: 12
 	};
 
 	let equipmentStats: Stats = {
@@ -37,19 +42,19 @@
 		stats: equipmentStats
 	};
 
+	// TODO: link up character info
+	/*
 	let character = $state({
 		name: 'Frog Character',
 		stats: characterStats,
 		equipped: null,
-		level: 1,
-		experience: 2400
+		level: 1
 	});
+	*/
 
-	//const inventory = new Array(10).fill(0).map((_) => item);
+	let character = $derived(gameState.character);
 
-	async function equip(equipment: typeof item, slot: 'weapon' | 'armor') {
-		console.log('equip', slot);
-		// TODO: handle transaction on move side instead tbh
+	async function equip(equipment: typeof item) {
 		character.equipped = equipment;
 	}
 
@@ -58,6 +63,10 @@
 	const statsFormatter = useFormatter('stats');
 	const goldFormatter = useFormatter('gold');
 	const aptosFormatter = useFormatter('aptos');
+
+	const formatOctas = (amount: string | number) => {
+		return aptosFormatter.format(Number(amount) * 10e-8);
+	};
 
 	let totalEquipmentStats: Stats = $state({
 		attack: 0,
@@ -76,13 +85,17 @@
 
 		totalEquipmentStats = equippedWeaponStats;
 	});
-	$inspect(character);
+
+	let aptosBalance = $state(0);
+	let goldBalance = $state(0);
+
+	const goldAssetType = '0xd3d090758858b38992c87517cce95058fe07c15c3b87395c2ba0922f6f13f06e';
 
 	const walletContext = getWalletContext();
 
 	type Metadata = Awaited<ReturnType<typeof APTOS.getFungibleAssetMetadataByAssetType>>;
 
-	async function dothing() {
+	async function getEquipmentInfo() {
 		const owned = await APTOS.getCurrentFungibleAssetBalances({
 			options: {
 				where: {
@@ -93,8 +106,11 @@
 			}
 		});
 
-		const equipments = owned.filter((o) => o.asset_type !== '0x1::aptos_coin::AptosCoin');
-
+		aptosBalance = owned.find((o) => o.asset_type === '0x1::aptos_coin::AptosCoin')?.amount || 0;
+		goldBalance = owned.find((o) => o.asset_type === goldAssetType)?.amount || 0;
+		const equipments = owned.filter(
+			(o) => o.asset_type !== '0x1::aptos_coin::AptosCoin' && o.asset_type !== goldAssetType
+		);
 		const assetInfo = (
 			await Promise.all(
 				equipments.map(async (o) => {
@@ -107,7 +123,6 @@
 					const metadata = await APTOS.getFungibleAssetMetadataByAssetType({
 						assetType: o.asset_type!
 					});
-					console.dir(statResource);
 
 					statResource = Object.fromEntries(
 						Object.entries(statResource)
@@ -137,29 +152,48 @@
 			return { ...e, ...equipmentStats };
 		});
 	}
-	let inventory = $state<ReturnType<typeof dothing>>(null!);
-
+	let inventory = $state<ReturnType<typeof getEquipmentInfo>>(null!);
 	onMount(() => {
-		inventory = dothing();
+		inventory = getEquipmentInfo();
+
+		const levelStats = SURF.useABI(ABIs.Character_ABI).view.get_stats_for_level({
+			typeArguments: [],
+			functionArguments: [character!.level]
+		});
+
 	});
 
-	// TODO: Get aptos balance
-	// TODO: Get Gold balance
-	// TODO: get currently equipped
-	// TODO: Allow level upping
+	const userState = getContext('USER') as UserState;
 
-	let gameState = useGameState();
+	async function refresh() {
+		inventory = getEquipmentInfo();
+		userState.getCharacters(walletContext.account!.address as `0x${string}`).then((resp) => {
+			userState.characters = Promise.resolve(resp);
+		});
+	}
+
+	let isLevelingUp = $state(false);
 
 	async function levelUp(characterName: string) {
-		const payload = createEntryPayload(GameManager_ABI, {
-			function: 'level_up',
-			functionArguments: [characterName],
-			typeArguments: []
-		});
+		isLevelingUp = true;
+		try {
+			const payload = createEntryPayload(GameManager_ABI, {
+				function: 'level_up',
+				functionArguments: [characterName],
+				typeArguments: []
+			});
 
-		walletContext.signAndSubmitTransaction({
-			data: payload
-		});
+			await walletContext.signAndSubmitTransaction({
+				data: payload
+			});
+
+			sleep(1000);
+			refresh();
+		} catch (error) {
+			console.error(error);
+		} finally {
+			isLevelingUp = false;
+		}
 	}
 </script>
 
@@ -193,13 +227,18 @@
 			<div>
 				<div class="text-lg font-medium">{character.name}</div>
 				<div>Lvl. {character.level}</div>
-
-				<Button
-					class="mt-4"
-					onclick={() => {
-						levelUp(gameState.character!.name);
-					}}>Level Up (100 gold)</Button
-				>
+				{#if isLevelingUp}
+					<Spinner></Spinner>
+				{:else if character.level === 5}
+					<div class="text-muted-foreground mt-2 text-xs uppercase">Max Level</div>
+				{:else}
+					<Button
+						class="mt-4"
+						onclick={() => {
+							levelUp(gameState.character!.name);
+						}}>Level Up (100 gold)</Button
+					>
+				{/if}
 			</div>
 			<div>
 				<h3 class="text-sm">Your Stats</h3>
@@ -229,14 +268,15 @@
 			<div class="">
 				<h3>Currencies</h3>
 				<div class="mt-2 flex items-center space-x-4">
-					<div class="flex items-center space-x-2 rounded-3xl border bg-muted px-3 py-1">
+					<div class="bg-muted flex items-center space-x-2 rounded-3xl border px-3 py-1">
 						<img src={AptosLogo} width="22" alt="Aptos Icon" />
-						<span> {aptosFormatter.format(3)} </span>
+						<!-- <span> {aptosFormatter.format(aptosBalance)} </span> -->
+						<span>{formatOctas(aptosBalance)}</span>
 					</div>
 
-					<div class="flex items-center space-x-2 rounded-3xl border bg-muted px-3 py-1">
+					<div class="bg-muted flex items-center space-x-2 rounded-3xl border px-3 py-1">
 						<img src={GoldLogo} width="22" alt="Gold Icon" />
-						<span> {goldFormatter.format(300)} </span>
+						<span> {goldFormatter.format(goldBalance)} </span>
 					</div>
 				</div>
 			</div>
@@ -270,6 +310,6 @@
 
 <style lang="postcss">
 	h3 {
-		@apply text-xs font-bold uppercase text-muted-foreground;
+		@apply text-muted-foreground text-xs font-bold uppercase;
 	}
 </style>

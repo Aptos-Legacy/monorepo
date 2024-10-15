@@ -43,8 +43,6 @@
 	async function buyItem(offerID: number) {
 		isBuying = true;
 
-		
-
 		try {
 			const payload = createEntryPayload(ABIs.Store_ABI, {
 				function: 'buy_offer',
@@ -55,7 +53,6 @@
 			const response = await walletContext.signAndSubmitTransaction({
 				data: payload
 			});
-			console.dir(response);
 		} catch (error) {
 			console.error(error);
 		} finally {

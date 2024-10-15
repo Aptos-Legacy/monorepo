@@ -27,8 +27,6 @@ module my_addr::GameManager {
     const E_ONLY_ADMIN: u64 = 2;
     const E_NOT_ENOUGH_GOLD_TO_LEVEL_UP: u64 = 3;
 
-
-
     const USER_MISSION_STATE_SEED: vector<u8> = b"USER_MISSION_STATE";
 
     //enum Status  has copy, drop, store, key  { Ongoing, Succes, Failure}

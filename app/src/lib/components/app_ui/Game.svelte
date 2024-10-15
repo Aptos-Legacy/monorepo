@@ -11,7 +11,7 @@
 	import { useGameState } from '$lib/state/gamestate.svelte';
 	import HomeScene from '$lib/scenes/HomeScene.svelte';
 	import { AvailableLayouts } from '$lib/types/Layouts';
-
+	import MissionResultLayout from './layouts/MissionResultLayout.svelte';
 
 	const gameState = useGameState();
 	let currentLayout = $derived(gameState.currentLayout);
@@ -22,7 +22,6 @@
 <div class="min-h-screen">
 	<Canvas>
 		<World>
-			<Debug />
 			{#if isInMission}
 				<MissionScene></MissionScene>
 			{:else}
@@ -48,6 +47,10 @@
 	{#if currentLayout === AvailableLayouts.Character}
 		<CharacterLayout onExit={() => gameState.navigateTo(AvailableLayouts.Explore)}
 		></CharacterLayout>
+	{/if}
+
+	{#if currentLayout === AvailableLayouts.MissionResult}
+		<MissionResultLayout></MissionResultLayout>
 	{/if}
 </Root>
 
